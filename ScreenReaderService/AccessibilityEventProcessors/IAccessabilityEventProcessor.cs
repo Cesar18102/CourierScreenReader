@@ -1,4 +1,6 @@
-﻿using Android.Views.Accessibility;
+﻿using System;
+
+using Android.Views.Accessibility;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {

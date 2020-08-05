@@ -18,7 +18,7 @@
     <AndroidResgenClass>Resource</AndroidResgenClass>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <AndroidUseLatestPlatformSdk>false</AndroidUseLatestPlatformSdk>
-    <TargetFrameworkVersion>v9.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v8.1</TargetFrameworkVersion>
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
@@ -72,10 +72,12 @@
     <Compile Include="Bot.cs" />
     <Compile Include="Data\BotInfo.cs" />
     <Compile Include="Data\ConstraintsInfo.cs" />
+    <Compile Include="Data\CredentialsInfo.cs" />
     <Compile Include="Data\FilterInfo.cs" />
     <Compile Include="Data\Order.cs" />
     <Compile Include="Data\ReplacementInfo.cs" />
     <Compile Include="Data\Services\ConstraintsConfigService.cs" />
+    <Compile Include="Data\Services\CredentialsConfigService.cs" />
     <Compile Include="Data\Services\FilterService.cs" />
     <Compile Include="Data\Services\ObjectFileMappingService.cs" />
     <Compile Include="Data\Services\TextPreparationService.cs" />

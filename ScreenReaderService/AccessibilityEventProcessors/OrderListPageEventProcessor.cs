@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 using Android.Views.Accessibility;
 
@@ -32,6 +33,8 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         public override void ProcessEvent(AccessibilityEvent e)
         {
+            //DateTime start = DateTime.Now;
+
             if (BotInfo.ActiveOrders.Count == ConstraintsConfigService.Constraints.MaxActiveOrdersAtTime)
                 return;
 
@@ -60,6 +63,9 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 AccessibilityNodeInfo deliveryTypeView = child.FindAccessibilityNodeInfosByViewId(ORDER_DELIVERY_TYPE_ID).FirstOrDefault();
                 AccessibilityNodeInfo typeView = child.FindAccessibilityNodeInfosByViewId(ORDER_TYPE_ID).FirstOrDefault();
 
+                if (fromView == null || toView == null)
+                    continue;
+
                 Order order = new Order(++BotInfo.IdCounter, fromView.Text, toView.Text);
 
                 if (deliveryTypeView != null && !string.IsNullOrEmpty(deliveryTypeView.Text))
@@ -77,6 +83,12 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                 break;
             }
+
+            //TimeSpan duration = DateTime.Now - start;
+
+            //await Notifier.NotifyMessage($"Iteration took {duration.TotalMilliseconds} ms");
+
+            ScreenReader.UpdateNeeded = true;
         }
     }
 }

@@ -46,6 +46,7 @@ namespace ScreenReaderService
 
             builder.RegisterType<FilterService>().AsSelf().SingleInstance();
             builder.RegisterType<ConstraintsConfigService>().AsSelf().SingleInstance();
+            builder.RegisterType<CredentialsConfigService>().AsSelf().SingleInstance();
             builder.RegisterType<TextPreparationService>().AsSelf().SingleInstance();
 
             builder.RegisterType<OrderListPageEventProcessor>().AsSelf().SingleInstance();

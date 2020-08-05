@@ -11,9 +11,5 @@ namespace ScreenReaderService.Data
         public Order DiscoveredOrder { get; set; }
 
         public bool Paused { get; set; }
-
-        public string Username { get; private set; } = "Vasian"; // "Cesar18102";
-        public string Login { get; private set; } = "vasian"; // "cesar18102";
-        public string Password { get; private set; } = "vasian"; // "123456";
     }
 }

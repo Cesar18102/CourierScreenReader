@@ -6,29 +6,44 @@ using Android.Support.V7.App;
 
 using Autofac;
 
+using ScreenReaderService.Telegram;
+using ScreenReaderService.Data.Services;
 using ScreenReaderService.AccessibilityEventProcessors;
-using ScreenReaderService.Services;
+using System;
 
 namespace ScreenReaderService
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
+        private TelegramNotifier TelegramNotifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
+        private CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate(savedInstanceState);
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+            try
+            {
+                base.OnCreate(savedInstanceState);
+                Xamarin.Essentials.Platform.Init(this, savedInstanceState);
 
-            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
 
-            Intent intentToAccessibility = new Intent(
-                this, typeof(ScreenReader)
-            );
+                Intent intentToAccessibility = new Intent(
+                    this, typeof(ScreenReader)
+                );
 
-            StartService(intentToAccessibility);
-            StartDelivery();
+                StartService(intentToAccessibility);
+                StartDelivery();
 
-            DependencyHolder.Dependencies.Resolve<Bot>().Start();
+                DependencyHolder.Dependencies.Resolve<Bot>().Start();
+            }
+            catch(Exception e)
+            {
+                TelegramNotifier.NotifyMessage(
+                    $"{CredentialsConfigService.Credentials.TelegramUsername}, your bot is stuck due to:" +
+                    $"\n{e.Message}\n\n\n{e.StackTrace}"
+                ).GetAwaiter().GetResult();
+            }
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
