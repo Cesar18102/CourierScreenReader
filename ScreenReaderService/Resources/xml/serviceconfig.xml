@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+                       android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewClicked"
+                       android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagReportViewIds"
+                       android:packageNames="ua.ipost.work, com.companyname.photosaver"
+                       android:accessibilityFeedbackType="feedbackSpoken"
+                       android:canRetrieveWindowContent="true"
+                       android:canPerformGestures="true"
+                       />
+<!--typeWindowsChanged|typeWindowContentChanged|typeNotificationStateChanged|typeAnnouncement-->
