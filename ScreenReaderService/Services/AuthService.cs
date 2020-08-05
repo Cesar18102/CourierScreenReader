@@ -1,6 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 using Autofac;
+using Newtonsoft.Json;
 using RestSharp;
 
 using ScreenReaderService.Dto;
@@ -26,9 +28,12 @@ namespace ScreenReaderService.Services
             RestClient client = new RestClient(LOG_IN_ENDPOINT);
             RestRequest request = new RestRequest(Method.POST);
 
-            request.AddJsonBody(dto);
+            request.AddJsonBody(JsonConvert.SerializeObject(dto));
 
-            await client.ExecuteAsync(request);
+            IRestResponse response = await client.ExecuteAsync(request);
+
+            if (!response.IsSuccessful)
+                throw new UnauthorizedAccessException();
         }
     }
 }

@@ -8,6 +8,9 @@
         private const string GET_FILTERS_INFO_CMD = "/get_filters_info";
         private const string GET_CONSTRAINTS_INFO_CMD = "/get_constraints_info";
 
+        private const string GET_ACTIVE_LIST_CMD = "/get_active_list";
+        private const string GET_DAY_HISTORY_CMD = "/get_day_history";
+
         private const string DELIVERED_CMD = "/delivered";
 
         public Command<string> ParseCommand(string text)
@@ -26,6 +29,12 @@
 
             if (text == GET_CONSTRAINTS_INFO_CMD)
                 return new Command<string>(CommandType.GET_CONSTRAINTS_INFO, null);
+
+            if (text == GET_ACTIVE_LIST_CMD)
+                return new Command<string>(CommandType.GET_ACTIVE_LIST, null);
+
+            if (text == GET_DAY_HISTORY_CMD)
+                return new Command<string>(CommandType.GET_DAY_HISTORY, null);
 
             if (text.StartsWith(DELIVERED_CMD))
             {
