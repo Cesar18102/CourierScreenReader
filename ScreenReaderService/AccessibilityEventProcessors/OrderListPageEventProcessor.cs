@@ -31,64 +31,68 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             return e.Source != null;
         }
 
-        public override void ProcessEvent(AccessibilityEvent e)
+        public override async void ProcessEvent(AccessibilityEvent e)
         {
-            //DateTime start = DateTime.Now;
-
-            if (BotInfo.ActiveOrders.Count == ConstraintsConfigService.Constraints.MaxActiveOrdersAtTime)
-                return;
-
-            if (BotInfo.ActiveOrders.Count + BotInfo.DoneOrders.Count == ConstraintsConfigService.Constraints.MaxOrdersPerDay)
-                return;
-
-            if (BotInfo.Paused)
-                return;
-
-            AccessibilityNodeInfo root = GetRoot(e.Source);
-            AccessibilityNodeInfo list = root.FindAccessibilityNodeInfosByViewId(ORDER_LIST_ID).FirstOrDefault();
-
-            if (list == null || list.ChildCount == 0)
-                return;
-
-            for(int i = 0; i < list.ChildCount; ++i)
+            try
             {
-                AccessibilityNodeInfo child = list.GetChild(i);
-                AccessibilityNodeInfo statusView = child.FindAccessibilityNodeInfosByViewId(ORDER_STATUS_ID).FirstOrDefault();
+                DateTime start = DateTime.Now;
 
-                if (statusView != null && statusView.Text != STATUS_AVAILABLE)
-                    continue;
+                if (BotInfo.ActiveOrders.Count == ConstraintsConfigService.Constraints.MaxActiveOrdersAtTime)
+                    return;
 
-                AccessibilityNodeInfo fromView = child.FindAccessibilityNodeInfosByViewId(ORDER_FROM_ID).FirstOrDefault();
-                AccessibilityNodeInfo toView = child.FindAccessibilityNodeInfosByViewId(ORDER_TO_ID).FirstOrDefault();
-                AccessibilityNodeInfo deliveryTypeView = child.FindAccessibilityNodeInfosByViewId(ORDER_DELIVERY_TYPE_ID).FirstOrDefault();
-                AccessibilityNodeInfo typeView = child.FindAccessibilityNodeInfosByViewId(ORDER_TYPE_ID).FirstOrDefault();
+                if (BotInfo.ActiveOrders.Count + BotInfo.DoneOrders.Count == ConstraintsConfigService.Constraints.MaxOrdersPerDay)
+                    return;
 
-                if (fromView == null || toView == null)
-                    continue;
+                if (BotInfo.Paused)
+                    return;
 
-                Order order = new Order(++BotInfo.IdCounter, fromView.Text, toView.Text);
+                AccessibilityNodeInfo root = GetRoot(e.Source);
+                AccessibilityNodeInfo list = root.FindAccessibilityNodeInfosByViewId(ORDER_LIST_ID).FirstOrDefault();
 
-                if (deliveryTypeView != null && !string.IsNullOrEmpty(deliveryTypeView.Text))
-                    order.Modifiers.Add(deliveryTypeView.Text);
+                if (list == null || list.ChildCount == 0)
+                    return;
 
-                if (typeView != null && !string.IsNullOrEmpty(typeView.Text))
-                    order.Modifiers.Add(typeView.Text);
+                for (int i = 0; i < list.ChildCount; ++i)
+                {
+                    AccessibilityNodeInfo child = list.GetChild(i);
+                    AccessibilityNodeInfo statusView = child.FindAccessibilityNodeInfosByViewId(ORDER_STATUS_ID).FirstOrDefault();
 
-                if (!FilterService.Assert(order))
-                    continue;
+                    if (statusView != null && statusView.Text != STATUS_AVAILABLE)
+                        continue;
 
-                Click(child);
-                BotInfo.DiscoveredOrder = order;
-                ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
+                    AccessibilityNodeInfo fromView = child.FindAccessibilityNodeInfosByViewId(ORDER_FROM_ID).FirstOrDefault();
+                    AccessibilityNodeInfo toView = child.FindAccessibilityNodeInfosByViewId(ORDER_TO_ID).FirstOrDefault();
+                    AccessibilityNodeInfo deliveryTypeView = child.FindAccessibilityNodeInfosByViewId(ORDER_DELIVERY_TYPE_ID).FirstOrDefault();
+                    AccessibilityNodeInfo typeView = child.FindAccessibilityNodeInfosByViewId(ORDER_TYPE_ID).FirstOrDefault();
 
-                break;
+                    if (fromView == null || toView == null)
+                        continue;
+
+                    Order order = new Order(++BotInfo.IdCounter, fromView.Text, toView.Text);
+
+                    if (deliveryTypeView != null && !string.IsNullOrEmpty(deliveryTypeView.Text))
+                        order.Modifiers.Add(deliveryTypeView.Text);
+
+                    if (typeView != null && !string.IsNullOrEmpty(typeView.Text))
+                        order.Modifiers.Add(typeView.Text);
+
+                    if (!FilterService.Assert(order))
+                        continue;
+
+                    Click(child);
+                    BotInfo.DiscoveredOrder = order;
+                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
+
+                    break;
+                }
+
+                TimeSpan duration = DateTime.Now - start;
+
+                await Notifier.NotifyMessage($"Iteration took {duration.TotalMilliseconds} ms");
+
+                //ScreenReader.UpdateNeeded = true;
             }
-
-            //TimeSpan duration = DateTime.Now - start;
-
-            //await Notifier.NotifyMessage($"Iteration took {duration.TotalMilliseconds} ms");
-
-            ScreenReader.UpdateNeeded = true;
+            catch (Exception ex) { await NotifyException(ex); }
         }
     }
 }

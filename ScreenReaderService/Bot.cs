@@ -21,6 +21,7 @@ namespace ScreenReaderService
         private TelegramNotifier Notifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
 
         private BotInfo BotInfo = DependencyHolder.Dependencies.Resolve<BotInfo>();
+        private FilterService FilterService = DependencyHolder.Dependencies.Resolve<FilterService>();
         private ConstraintsConfigService ConstraintsConfigService = DependencyHolder.Dependencies.Resolve<ConstraintsConfigService>();
         private CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
 
@@ -62,6 +63,14 @@ namespace ScreenReaderService
             {
                 case CommandType.PAUSE: BotInfo.Paused = true; break;
                 case CommandType.RESUME: BotInfo.Paused = false; break;
+
+                case CommandType.GET_FILTERS_INFO: 
+                    await Notifier.NotifyMessage(FilterService.Filters.ToString()); 
+                    break;
+                case CommandType.GET_CONSTRAINTS_INFO: 
+                    await Notifier.NotifyMessage(ConstraintsConfigService.Constraints.ToString()); 
+                    break;
+
                 case CommandType.DELIVERED: await MarkDelivered(command.Data); break;
             }
         }

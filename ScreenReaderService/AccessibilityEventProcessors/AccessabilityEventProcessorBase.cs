@@ -1,11 +1,13 @@
 ﻿using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 using Android.Views.Accessibility;
 
 using Autofac;
 
 using ScreenReaderService.Data;
+using ScreenReaderService.Data.Services;
 using ScreenReaderService.Telegram;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
@@ -24,6 +26,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         protected BotInfo BotInfo = DependencyHolder.Dependencies.Resolve<BotInfo>();
         protected TelegramNotifier Notifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
+        protected CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
 
         public abstract bool IsValuableEvent(AccessibilityEvent e);
         public abstract void ProcessEvent(AccessibilityEvent e);
@@ -89,6 +92,14 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         protected AccessibilityNodeInfo GetButtonPanel(AccessibilityNodeInfo root)
         {
             return root.FindAccessibilityNodeInfosByViewId(BUTTON_PANEL_ID).FirstOrDefault();
+        }
+
+        protected async Task NotifyException(System.Exception e)
+        {
+            await Notifier.NotifyMessage(
+                $"{CredentialsConfigService.Credentials.TelegramUsername}, your bot is stuck due to:" +
+                $"\n{e.Message}\n\n\n{e.StackTrace}"
+            );
         }
 
         protected string GetAllText(AccessibilityNodeInfo node)

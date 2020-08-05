@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -12,11 +13,13 @@ namespace ScreenReaderService.Telegram
     {
         private const string BOT_ENDPOINT = "https://api.telegram.org/bot";
 
+        private const int MAX_MESSAGE_LENGTH = 4096;
+
         private const string SEND_MESSAGE_ENDPOINT = "sendMessage";
         private const string GET_UPDATES_ENDPOINT = "getUpdates";
 
         private const string TOKEN = "1257258578:AAFcCEnEkga8jS3nJ6jjRizx_Qudfgx9hME";
-        private const string CHAT_ID = "-1001423642114";
+        private static string CURRENT_CHAT_ID { get; set; }
 
         private static TelegramBotCommandParser CommandParser = new TelegramBotCommandParser();
 
@@ -40,7 +43,10 @@ namespace ScreenReaderService.Telegram
                         return commands;
                     }
                     else
+                    {
                         commands.Add(command);
+                        CURRENT_CHAT_ID = update.Message.Sender.Id.ToString();
+                    }
                 }
             }
 
@@ -69,11 +75,23 @@ namespace ScreenReaderService.Telegram
 
         public async Task NotifyMessage(string message)
         {
+            int messagePartsCount = (int)Math.Ceiling((float)message.Length / MAX_MESSAGE_LENGTH);
+
+            for(int i = 0; i < messagePartsCount; ++i)
+            {
+                int subMessageLength = Math.Min(MAX_MESSAGE_LENGTH, message.Length - i * MAX_MESSAGE_LENGTH);
+                string subMessage = message.Substring(i * MAX_MESSAGE_LENGTH, subMessageLength);
+                await SendMessage(subMessage);
+            }
+        }
+
+        public async Task SendMessage(string message)
+        {
             RestClient client = new RestClient($"{BOT_ENDPOINT}{TOKEN}/{SEND_MESSAGE_ENDPOINT}") { Timeout = -1 };
             RestRequest request = new RestRequest(Method.POST);
 
             TelegramMessageDto dto = new TelegramMessageDto(
-                CHAT_ID, message
+                CURRENT_CHAT_ID, message
             );
 
             string json = JsonConvert.SerializeObject(dto);

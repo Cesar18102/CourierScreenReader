@@ -2,12 +2,11 @@
 
 using Android.App;
 using Android.Content;
+using Android.Graphics;
 using Android.Views.Accessibility;
 using Android.AccessibilityServices;
 
 using ScreenReaderService.AccessibilityEventProcessors;
-using Android.Graphics;
-using Android.Util;
 
 namespace ScreenReaderService
 {
@@ -25,12 +24,12 @@ namespace ScreenReaderService
         protected override void OnServiceConnected()
         {
             base.OnServiceConnected();
-            StartUpdating();
+            //StartUpdating();
         }
 
         public override void OnAccessibilityEvent(AccessibilityEvent e)
         {
-            if (!EventProcessor.IsValuableEvent(e))
+            if (EventProcessor == null || !EventProcessor.IsValuableEvent(e))
                 return;
 
             EventProcessor.ProcessEvent(e);

@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+
+using Newtonsoft.Json;
 
 using Autofac;
 
@@ -18,30 +20,43 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         public override async void ProcessEvent(AccessibilityEvent e)
         {
-            AccessibilityNodeInfo root = GetRoot(e.Source);
-            AccessibilityNodeInfo message = GetMessageBox(root);
-
-            if (NeedGoBack)
+            try
             {
-                if (Back(root))
+                AccessibilityNodeInfo root = GetRoot(e.Source);
+                AccessibilityNodeInfo message = GetMessageBox(root);
+
+
+                /////TEMP
+                string endPageJson = GetAllText(root);
+                await Notifier.NotifyMessage("**END PAGE JSON**\n" + endPageJson);
+                //////TEMP
+
+
+                if (NeedGoBack)
                 {
-                    NeedGoBack = false;
-                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                    if (Back(root))
+                    {
+                        NeedGoBack = false;
+                        ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                    }
+
+                    return;
                 }
 
-                return;
+                if (message.Text == ORDER_TAKEN_MESSAGE_TEXT)
+                {
+                    BotInfo.ActiveOrders.Add(BotInfo.DiscoveredOrder);
+
+                    await Notifier.NotifyMessage(
+                        $"@{CredentialsConfigService.Credentials.TelegramUsername}, your bot've taken an order: \n" +
+                        $"{BotInfo.DiscoveredOrder.ToString()}"
+                    );
+
+                    BotInfo.DiscoveredOrder = null;
+                    NeedGoBack = true;
+                }
             }
-
-            if (message.Text == ORDER_TAKEN_MESSAGE_TEXT)
-            {
-                BotInfo.ActiveOrders.Add(BotInfo.DiscoveredOrder);
-
-                string orderJson = JsonConvert.SerializeObject(BotInfo.DiscoveredOrder);
-                await Notifier.NotifyMessage(orderJson);
-
-                BotInfo.DiscoveredOrder = null;
-                NeedGoBack = true;
-            }
+            catch(Exception ex) { await NotifyException(ex); }
         }
     }
 }

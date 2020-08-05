@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 using Android.Views.Accessibility;
 
@@ -42,56 +43,60 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         public override async void ProcessEvent(AccessibilityEvent e)
         {
-            AccessibilityNodeInfo root = GetRoot(e.Source);
-            string jsin = GetAllText(root);
-
-            if(NeedGoBack)
+            try
             {
-                if (Back(root))
+                AccessibilityNodeInfo root = GetRoot(e.Source);
+                string jsin = GetAllText(root);
+
+                if (NeedGoBack)
                 {
-                    NeedGoBack = false;
-                    State = ConfirmationState.INIT;
-                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                    if (Back(root))
+                    {
+                        NeedGoBack = false;
+                        State = ConfirmationState.INIT;
+                        ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                    }
+
+                    return;
                 }
 
-                return;
+                if (HandleErrorIfOccured(root))
+                    return;
+
+                switch (State)
+                {
+                    case ConfirmationState.INIT:
+
+                        if (OpenOptions(root))
+                            State = ConfirmationState.OPENED;
+
+                        break;
+
+                    case ConfirmationState.OPENED:
+
+                        if (AcceptOrder(root))
+                            State = ConfirmationState.ACCEPTED;
+
+                        break;
+
+                    case ConfirmationState.ACCEPTED:
+
+                        if (ConfirmOrder(root))
+                            State = ConfirmationState.CONFIRMED;
+
+                        await Notifier.NotifyMessage(GetAllText(root));
+
+                        break;
+
+                    case ConfirmationState.CONFIRMED:
+
+                        State = ConfirmationState.INIT;
+                        ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<TakenOrderPageEventProcessor>();
+
+                        break;
+                }
             }
-
-            if(HandleErrorIfOccured(root))
-                return;
-
-            switch (State)
-            {
-                case ConfirmationState.INIT:
-
-                    if (OpenOptions(root))
-                        State = ConfirmationState.OPENED;
-
-                    break;
-
-                case ConfirmationState.OPENED:
-
-                    if (AcceptOrder(root))
-                        State = ConfirmationState.ACCEPTED;
-
-                    break;
-
-                case ConfirmationState.ACCEPTED:
-
-                    if (ConfirmOrder(root))
-                        State = ConfirmationState.CONFIRMED;
-
-                    await Notifier.NotifyMessage(GetAllText(root));
-
-                    break;
-
-                case ConfirmationState.CONFIRMED:
-
-                    State = ConfirmationState.INIT;
-                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<TakenOrderPageEventProcessor>();
-
-                    break;
-            }
+            catch(Exception ex) { await NotifyException(ex); }
         }
 
         private bool OpenOptions(AccessibilityNodeInfo root)

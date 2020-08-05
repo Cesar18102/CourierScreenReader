@@ -4,6 +4,8 @@
     {
         PAUSE,
         RESUME,
-        DELIVERED
+        DELIVERED,
+        GET_FILTERS_INFO,
+        GET_CONSTRAINTS_INFO
     }
 }
