@@ -46,7 +46,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             try
             {
                 AccessibilityNodeInfo root = GetRoot(e.Source);
-                //string jsin = GetAllText(root);
 
                 if (NeedGoBack)
                 {
@@ -83,8 +82,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                         if (ConfirmOrder(root))
                             State = ConfirmationState.CONFIRMED;
-
-                        //await Notifier.NotifyMessage(GetAllText(root));
 
                         break;
 

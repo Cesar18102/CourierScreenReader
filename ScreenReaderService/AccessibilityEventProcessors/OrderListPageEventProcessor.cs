@@ -5,18 +5,12 @@ using Android.Views.Accessibility;
 
 using Autofac;
 
-using Newtonsoft.Json;
-
 using ScreenReaderService.Data;
-using ScreenReaderService.Data.Services;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {
     public class OrderListPageEventProcessor : AccessabilityEventProcessorBase
     {
-        private FilterService FilterService = DependencyHolder.Dependencies.Resolve<FilterService>();
-        private ConstraintsConfigService ConstraintsConfigService = DependencyHolder.Dependencies.Resolve<ConstraintsConfigService>();
-
         private const string ORDER_LIST_ID = "ua.ipost.work:id/list";
         private const string ORDER_STATUS_ID = "ua.ipost.work:id/tvStatus";
         private const string ORDER_FROM_ID = "ua.ipost.work:id/tvFromName";
@@ -37,13 +31,16 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             {
                 DateTime start = DateTime.Now;
 
-                if (BotInfo.ActiveOrders.Count == ConstraintsConfigService.Constraints.MaxActiveOrdersAtTime)
+                if (BotService.WorkService.WorkInfo.ActiveOrders.Count == BotService.ConstraintsService.Constraints.MaxActiveOrdersAtTime)
                     return;
 
-                if (BotInfo.ActiveOrders.Count + BotInfo.DoneOrders.Count == ConstraintsConfigService.Constraints.MaxOrdersPerDay)
+                int todayTakenOrdersCount = BotService.WorkService.WorkInfo.ActiveOrders.Count + 
+                                            BotService.WorkService.WorkInfo.DoneOrders.Count;
+
+                if (todayTakenOrdersCount == BotService.ConstraintsService.Constraints.MaxOrdersPerDay)
                     return;
 
-                if (BotInfo.Paused)
+                if (BotService.StateService.StateInfo.Paused)
                     return;
 
                 AccessibilityNodeInfo root = GetRoot(e.Source);
@@ -68,7 +65,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     if (fromView == null || toView == null)
                         continue;
 
-                    Order order = new Order(++BotInfo.IdCounter, fromView.Text, toView.Text);
+                    Order order = new Order(BotService.StateService.StateInfo.IdCounter + i, fromView.Text, toView.Text);
 
                     if (deliveryTypeView != null && !string.IsNullOrEmpty(deliveryTypeView.Text))
                         order.Modifiers.Add(deliveryTypeView.Text);
@@ -76,11 +73,15 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     if (typeView != null && !string.IsNullOrEmpty(typeView.Text))
                         order.Modifiers.Add(typeView.Text);
 
-                    if (!FilterService.Assert(order))
+                    if (!BotService.FilterService.Assert(order))
                         continue;
 
                     Click(child);
-                    BotInfo.DiscoveredOrder = order;
+
+                    ++BotService.StateService.StateInfo.IdCounter;
+                    BotService.StateService.StateInfo.DiscoveredOrder = order;
+                    BotService.StateService.Save();
+
                     ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
 
                     break;

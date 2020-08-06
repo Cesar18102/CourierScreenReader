@@ -1,4 +1,6 @@
-﻿using Android.OS;
+﻿using System;
+
+using Android.OS;
 using Android.App;
 using Android.Runtime;
 using Android.Content;
@@ -7,17 +9,16 @@ using Android.Support.V7.App;
 using Autofac;
 
 using ScreenReaderService.Telegram;
-using ScreenReaderService.Data.Services;
+using ScreenReaderService.Services;
 using ScreenReaderService.AccessibilityEventProcessors;
-using System;
 
 namespace ScreenReaderService
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
+        private BotService BotService = DependencyHolder.Dependencies.Resolve<BotService>();
         private TelegramNotifier TelegramNotifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
-        private CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -40,7 +41,7 @@ namespace ScreenReaderService
             catch(Exception e)
             {
                 TelegramNotifier.NotifyMessage(
-                    $"{CredentialsConfigService.Credentials.TelegramUsername}, your bot is stuck due to:" +
+                    $"{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:" +
                     $"\n{e.Message}\n\n\n{e.StackTrace}"
                 ).GetAwaiter().GetResult();
             }

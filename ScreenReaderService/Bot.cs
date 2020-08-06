@@ -7,7 +7,6 @@ using Autofac;
 using ScreenReaderService.Data;
 using ScreenReaderService.Telegram;
 using ScreenReaderService.Services;
-using ScreenReaderService.Data.Services;
 
 namespace ScreenReaderService
 {
@@ -18,13 +17,8 @@ namespace ScreenReaderService
         private const int ITERATIONS_FOR_TELEGRAM_UPDATE = 1;
         private const int ITERATIONS_FOR_AUTH_CHECK = 60 * 30;
 
+        private BotService BotService = DependencyHolder.Dependencies.Resolve<BotService>();
         private TelegramNotifier Notifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
-
-        private BotInfo BotInfo = DependencyHolder.Dependencies.Resolve<BotInfo>();
-
-        private FilterService FilterService = DependencyHolder.Dependencies.Resolve<FilterService>();
-        private ConstraintsConfigService ConstraintsConfigService = DependencyHolder.Dependencies.Resolve<ConstraintsConfigService>();
-        private CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
 
         public async void Start()
         {
@@ -43,16 +37,16 @@ namespace ScreenReaderService
         private async Task CheckAuth()
         {
             await DependencyHolder.Dependencies.Resolve<AuthService>().LogIn(
-                CredentialsConfigService.Credentials.Login,
-                CredentialsConfigService.Credentials.Password
+                BotService.CredentialsService.Credentials.Login,
+                BotService.CredentialsService.Credentials.Password
             );
         }
 
         private async Task HandleTelegramUpdates()
         {
             IEnumerable<Command<string>> commands = await Notifier.GetUpdates(
-                    CredentialsConfigService.Credentials.TelegramUsername
-                );
+                BotService.CredentialsService.Credentials.TelegramUsername
+            );
 
             foreach (Command<string> command in commands)
                 await ProcessCommand(command);
@@ -62,21 +56,40 @@ namespace ScreenReaderService
         {
             switch (command.CommandType)
             {
-                case CommandType.PAUSE: BotInfo.Paused = true; break;
-                case CommandType.RESUME: BotInfo.Paused = false; break;
+                case CommandType.PAUSE: 
+                    BotService.StateService.StateInfo.Paused = true;
+                    BotService.StateService.Save();
+                    break;
+                case CommandType.RESUME:
+                    BotService.StateService.StateInfo.Paused = false;
+                    BotService.StateService.Save();
+                    break;
 
                 case CommandType.GET_FILTERS_INFO: 
-                    await Notifier.NotifyMessage(FilterService.Filters.ToString()); 
+                    await Notifier.NotifyMessage(BotService.FilterService.Filters.ToString()); 
                     break;
                 case CommandType.GET_CONSTRAINTS_INFO: 
-                    await Notifier.NotifyMessage(ConstraintsConfigService.Constraints.ToString()); 
+                    await Notifier.NotifyMessage(BotService.ConstraintsService.Constraints.ToString()); 
                     break;
 
                 case CommandType.GET_ACTIVE_LIST:
-                    await Notifier.NotifyMessage(string.Join('\n', BotInfo.ActiveOrders));
+                    string activeOrders = string.Join('\n', BotService.WorkService.WorkInfo.ActiveOrders);
+                    await Notifier.NotifyMessage(string.IsNullOrEmpty(activeOrders) ? "No active orders" : activeOrders);
                     break;
                 case CommandType.GET_DAY_HISTORY:
-                    await Notifier.NotifyMessage(string.Join('\n', BotInfo.DoneOrders));
+                    string doneOrders = string.Join('\n', BotService.WorkService.WorkInfo.DoneOrders);
+                    await Notifier.NotifyMessage(string.IsNullOrEmpty(doneOrders) ? "No done orders" : doneOrders);
+                    break;
+
+                case CommandType.CLEAR_DAY_HISTORY:
+                    if (BotService.WorkService.WorkInfo.DoneOrders.Count == 0)
+                        await Notifier.NotifyMessage("No history to be cleared");
+                    else
+                    {
+                        BotService.WorkService.WorkInfo.DoneOrders.Clear();
+                        BotService.WorkService.Save();
+                        await Notifier.NotifyMessage("History cleared");
+                    }
                     break;
 
                 case CommandType.DELIVERED: await MarkDelivered(command.Data); break;
@@ -85,23 +98,25 @@ namespace ScreenReaderService
 
         private async Task MarkDelivered(string id)
         {
-            Order delivered = BotInfo.ActiveOrders.FirstOrDefault(order => order.Id.ToString() == id);
+            Order delivered = BotService.WorkService.WorkInfo.ActiveOrders.FirstOrDefault(order => order.Id.ToString() == id);
 
             if (delivered == null)
             {
                 await Notifier.NotifyMessage(
-                    $"@{CredentialsConfigService.Credentials.TelegramUsername}, order with ID = {id} not found;"
+                    $"@{BotService.CredentialsService.Credentials.TelegramUsername}, order with ID = {id} not found;"
                 );
             }
             else
             {
-                BotInfo.ActiveOrders.Remove(delivered);
-                BotInfo.DoneOrders.Add(delivered);
+                BotService.WorkService.WorkInfo.ActiveOrders.Remove(delivered);
+                BotService.WorkService.WorkInfo.DoneOrders.Add(delivered);
+
+                BotService.WorkService.Save();
 
                 await Notifier.NotifyMessage(
-                    $"@{CredentialsConfigService.Credentials.TelegramUsername}, order with ID = {id} marked as delivered.\n" +
-                    $"Now you've {BotInfo.ActiveOrders.Count}/{ConstraintsConfigService.Constraints.MaxActiveOrdersAtTime} active orders.\n" +
-                    $"Today you've delivered {BotInfo.DoneOrders.Count}/{ConstraintsConfigService.Constraints.MaxOrdersPerDay} orders."
+                    $"@{BotService.CredentialsService.Credentials.TelegramUsername}, order with ID = {id} marked as delivered.\n" +
+                    $"Now you've {BotService.WorkService.WorkInfo.ActiveOrders.Count}/{BotService.ConstraintsService.Constraints.MaxActiveOrdersAtTime} active orders.\n" +
+                    $"Today you've delivered {BotService.WorkService.WorkInfo.DoneOrders.Count}/{BotService.ConstraintsService.Constraints.MaxOrdersPerDay} orders."
                 );
             }
         }

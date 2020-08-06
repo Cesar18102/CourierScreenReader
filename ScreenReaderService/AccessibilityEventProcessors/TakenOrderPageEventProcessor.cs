@@ -1,6 +1,5 @@
 ﻿using System;
-
-using Newtonsoft.Json;
+using System.Linq;
 
 using Autofac;
 
@@ -11,6 +10,8 @@ namespace ScreenReaderService.AccessibilityEventProcessors
     public class TakenOrderPageEventProcessor : AccessabilityEventProcessorBase
     {
         private bool NeedGoBack { get; set; }
+
+        private const string ORDER_TAKEN_MESSAGE_ID = "ua.ipost.work:id/tvStatus";
         private const string ORDER_TAKEN_MESSAGE_TEXT = "Доставка принята!";
 
         public override bool IsValuableEvent(AccessibilityEvent e)
@@ -23,38 +24,38 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             try
             {
                 AccessibilityNodeInfo root = GetRoot(e.Source);
-                AccessibilityNodeInfo message = GetMessageBox(root);
+                AccessibilityNodeInfo message = root.FindAccessibilityNodeInfosByViewId(ORDER_TAKEN_MESSAGE_ID).FirstOrDefault();
 
-
-                /////TEMP
+                /*/////TEMP
                 string endPageJson = GetAllText(root);
                 await Notifier.NotifyMessage("**END PAGE JSON**\n" + endPageJson);
-                //////TEMP
+                //////TEMP*/
 
-
-                if (NeedGoBack)
+                if (message != null && message.Text == ORDER_TAKEN_MESSAGE_TEXT)
                 {
-                    if (Back(root))
-                    {
-                        NeedGoBack = false;
-                        ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
-                    }
+                    BotService.WorkService.WorkInfo.ActiveOrders.Add(
+                        BotService.StateService.StateInfo.DiscoveredOrder
+                    );
+                    BotService.WorkService.Save();
 
+                    ConfirmMessageBox(root);
+
+                    await Notifier.NotifyMessage(
+                        $"@{BotService.CredentialsService.Credentials.TelegramUsername}, your bot've taken an order: \n" +
+                        $"{BotService.StateService.StateInfo.DiscoveredOrder.ToString()}"
+                    );
+
+                    BotService.StateService.StateInfo.DiscoveredOrder = null;
+                    BotService.StateService.Save();
+
+                    NeedGoBack = true;
                     return;
                 }
 
-                //message not null
-                if (message.Text == ORDER_TAKEN_MESSAGE_TEXT)
+                if (NeedGoBack && Back(root))
                 {
-                    BotInfo.ActiveOrders.Add(BotInfo.DiscoveredOrder);
-                    //add  confirming popup
-                    await Notifier.NotifyMessage(
-                        $"@{CredentialsConfigService.Credentials.TelegramUsername}, your bot've taken an order: \n" +
-                        $"{BotInfo.DiscoveredOrder.ToString()}"
-                    );
-
-                    BotInfo.DiscoveredOrder = null;
-                    NeedGoBack = true;
+                    NeedGoBack = false;
+                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
                 }
             }
             catch(Exception ex) { await NotifyException(ex); }

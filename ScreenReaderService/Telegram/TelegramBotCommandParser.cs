@@ -10,6 +10,7 @@
 
         private const string GET_ACTIVE_LIST_CMD = "/get_active_list";
         private const string GET_DAY_HISTORY_CMD = "/get_day_history";
+        private const string CLEAR_DAY_HISTORY_CMD = "/clear_day_history";
 
         private const string DELIVERED_CMD = "/delivered";
 
@@ -35,6 +36,9 @@
 
             if (text == GET_DAY_HISTORY_CMD)
                 return new Command<string>(CommandType.GET_DAY_HISTORY, null);
+
+            if (text == CLEAR_DAY_HISTORY_CMD)
+                return new Command<string>(CommandType.CLEAR_DAY_HISTORY, null);
 
             if (text.StartsWith(DELIVERED_CMD))
             {

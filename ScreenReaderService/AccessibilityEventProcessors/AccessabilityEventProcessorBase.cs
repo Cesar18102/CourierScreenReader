@@ -6,9 +6,9 @@ using Android.Views.Accessibility;
 
 using Autofac;
 
-using ScreenReaderService.Data;
-using ScreenReaderService.Data.Services;
 using ScreenReaderService.Telegram;
+using ScreenReaderService.Services;
+using ScreenReaderService.Data.Services;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {
@@ -24,9 +24,8 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         protected const string ACCEPT_MESSAGE_BOX_BUTTON = "android:id/button1";
         protected const string REFUSE_MESSAGE_BOX_BUTTON = "android:id/button2";
 
-        protected BotInfo BotInfo = DependencyHolder.Dependencies.Resolve<BotInfo>();
+        protected BotService BotService = DependencyHolder.Dependencies.Resolve<BotService>();
         protected TelegramNotifier Notifier = DependencyHolder.Dependencies.Resolve<TelegramNotifier>();
-        protected CredentialsConfigService CredentialsConfigService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
 
         public abstract bool IsValuableEvent(AccessibilityEvent e);
         public abstract void ProcessEvent(AccessibilityEvent e);
@@ -97,7 +96,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         protected async Task NotifyException(System.Exception e)
         {
             await Notifier.NotifyMessage(
-                $"{CredentialsConfigService.Credentials.TelegramUsername}, your bot is stuck due to:" +
+                $"{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:" +
                 $"\n{e.Message}\n\n\n{e.StackTrace}"
             );
         }

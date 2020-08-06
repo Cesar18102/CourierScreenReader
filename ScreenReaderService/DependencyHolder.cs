@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 
 using Autofac;
 
-using ScreenReaderService.Data;
 using ScreenReaderService.Util;
 using ScreenReaderService.Telegram;
 using ScreenReaderService.Services;
@@ -40,7 +39,7 @@ namespace ScreenReaderService
             builder.RegisterType<AuthService>().AsSelf().SingleInstance();
 
             builder.RegisterType<Bot>().AsSelf().SingleInstance();
-            builder.RegisterType<BotInfo>().AsSelf().SingleInstance();
+            builder.RegisterType<BotService>().AsSelf().SingleInstance();
 
             builder.RegisterType<FileManager>().AsSelf().SingleInstance();
 
@@ -48,6 +47,8 @@ namespace ScreenReaderService
             builder.RegisterType<ConstraintsConfigService>().AsSelf().SingleInstance();
             builder.RegisterType<CredentialsConfigService>().AsSelf().SingleInstance();
             builder.RegisterType<TextPreparationService>().AsSelf().SingleInstance();
+            builder.RegisterType<StateService>().AsSelf().SingleInstance();
+            builder.RegisterType<WorkService>().AsSelf().SingleInstance();
 
             builder.RegisterType<OrderListPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<OrderPageEventProcessor>().AsSelf().SingleInstance();
