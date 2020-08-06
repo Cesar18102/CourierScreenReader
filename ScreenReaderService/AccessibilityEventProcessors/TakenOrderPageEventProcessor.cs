@@ -43,6 +43,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     return;
                 }
 
+                //message not null
                 if (message.Text == ORDER_TAKEN_MESSAGE_TEXT)
                 {
                     BotInfo.ActiveOrders.Add(BotInfo.DiscoveredOrder);
