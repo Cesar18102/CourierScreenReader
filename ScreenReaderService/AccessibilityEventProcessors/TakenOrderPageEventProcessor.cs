@@ -46,7 +46,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 if (message.Text == ORDER_TAKEN_MESSAGE_TEXT)
                 {
                     BotInfo.ActiveOrders.Add(BotInfo.DiscoveredOrder);
-
+                    //add  confirming popup
                     await Notifier.NotifyMessage(
                         $"@{CredentialsConfigService.Credentials.TelegramUsername}, your bot've taken an order: \n" +
                         $"{BotInfo.DiscoveredOrder.ToString()}"
