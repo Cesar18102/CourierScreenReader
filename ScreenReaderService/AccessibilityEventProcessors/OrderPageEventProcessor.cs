@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-
+using System.Threading.Tasks;
 using Android.Views.Accessibility;
 
 using Autofac;
@@ -73,8 +73,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                         int price = GetOrderPrice(root);
                         if(price == -1)
                         {
-                            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
-                            Back(root);
+                            await Skip("Buy price info not found", root);
                             return;
                         }
 
@@ -84,8 +83,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                         if(orderPriceGreaterThanMaxOrderPrice || orderPriceExceedsMaxTotalSpend)
                         {
-                            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
-                            Back(root);
+                            await Skip("Buy price exceeded", root);
                             return;
                         }
 
@@ -121,15 +119,19 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             catch(Exception ex) { await NotifyException(ex); }
         }
 
+        private async Task Skip(string reason, AccessibilityNodeInfo root) 
+        {
+            await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder} skipped due to '{reason}'");
+            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+            Back(root);
+        }
+
         private int GetOrderPrice(AccessibilityNodeInfo root)
         {
             AccessibilityNodeInfo priceNode = root.FindAccessibilityNodeInfosByViewId(PRICE_LABEL_ID).FirstOrDefault();
 
             if (priceNode == null || string.IsNullOrEmpty(priceNode.Text))
-            {
-                NeedGoBack = true;
                 return -1;
-            }
 
             string priceText = priceNode.Text;
             string priceStr = priceText.Replace(PRICE_TEXT_PREFIX, "").Replace(PRICE_TEXT_ENDIAN, "");

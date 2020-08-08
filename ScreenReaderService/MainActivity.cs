@@ -33,6 +33,9 @@ namespace ScreenReaderService
                     this, typeof(ScreenReader)
                 );
 
+                BotService.StateService.StateInfo.Paused = true;
+                BotService.StateService.Save();
+
                 StartService(intentToAccessibility);
                 StartDelivery();
 

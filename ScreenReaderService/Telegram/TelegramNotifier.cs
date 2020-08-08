@@ -85,7 +85,7 @@ namespace ScreenReaderService.Telegram
             }
         }
 
-        public async Task SendMessage(string message)
+        private async Task SendMessage(string message)
         {
             RestClient client = new RestClient($"{BOT_ENDPOINT}{TOKEN}/{SEND_MESSAGE_ENDPOINT}") { Timeout = -1 };
             RestRequest request = new RestRequest(Method.POST);

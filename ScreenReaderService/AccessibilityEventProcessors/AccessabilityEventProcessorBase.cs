@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,7 +9,6 @@ using Autofac;
 
 using ScreenReaderService.Telegram;
 using ScreenReaderService.Services;
-using ScreenReaderService.Data.Services;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {
@@ -46,7 +46,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             while (!node.Clickable)
                 node = node.Parent;
 
-            return node.PerformAction(Action.Click);
+            return node.PerformAction(Android.Views.Accessibility.Action.Click);
         }
 
         protected bool Back(AccessibilityNodeInfo root)
@@ -93,12 +93,20 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             return root.FindAccessibilityNodeInfosByViewId(BUTTON_PANEL_ID).FirstOrDefault();
         }
 
-        protected async Task NotifyException(System.Exception e)
+        protected async Task NotifyException(Exception e)
         {
             await Notifier.NotifyMessage(
-                $"{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:" +
-                $"\n{e.Message}\n\n\n{e.StackTrace}"
+                $"@{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:\n" +
+                GetExceptionInfo(e)
             );
+        }
+
+        private string GetExceptionInfo(Exception e)
+        {
+            if (e == null)
+                return "";
+
+            return $"{e.Message}\n\n{e.StackTrace}\n\n**********************\n\n{GetExceptionInfo(e)}";
         }
 
         protected string GetAllText(AccessibilityNodeInfo node)

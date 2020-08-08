@@ -32,22 +32,34 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 DateTime start = DateTime.Now;
 
                 if (BotService.WorkService.WorkInfo.ActiveOrders.Count == BotService.ConstraintsService.Constraints.MaxActiveOrdersAtTime)
+                {
+                    await Notifier.NotifyMessage("Scanning skipped due to: 'active orders count exceeded'");
                     return;
+                }
 
                 int todayTakenOrdersCount = BotService.WorkService.WorkInfo.ActiveOrders.Count + 
                                             BotService.WorkService.WorkInfo.DoneOrders.Count;
 
                 if (todayTakenOrdersCount == BotService.ConstraintsService.Constraints.MaxOrdersPerDay)
+                {
+                    await Notifier.NotifyMessage("Scanning skipped due to: 'daily orders count exceeded'");
                     return;
+                }
 
                 if (BotService.StateService.StateInfo.Paused)
+                {
+                    await Notifier.NotifyMessage("Scanning skipped due to: 'bot paused'");
                     return;
+                }
 
                 AccessibilityNodeInfo root = GetRoot(e.Source);
                 AccessibilityNodeInfo list = root.FindAccessibilityNodeInfosByViewId(ORDER_LIST_ID).FirstOrDefault();
 
                 if (list == null || list.ChildCount == 0)
+                {
+                    await Notifier.NotifyMessage("Scanning skipped due to: 'no orders listed'");
                     return;
+                }
 
                 for (int i = 0; i < list.ChildCount; ++i)
                 {
@@ -92,7 +104,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                 TimeSpan duration = DateTime.Now - start;
 
-                await Notifier.NotifyMessage($"Iteration took {duration.TotalMilliseconds} ms");
+                await Notifier.NotifyMessage($"Scanning {list.ChildCount} orders took {duration.TotalMilliseconds} ms");
 
                 //ScreenReader.UpdateNeeded = true;
             }
