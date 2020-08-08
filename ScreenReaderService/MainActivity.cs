@@ -41,10 +41,18 @@ namespace ScreenReaderService
             catch(Exception e)
             {
                 TelegramNotifier.NotifyMessage(
-                    $"{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:" +
-                    $"\n{e.Message}\n\n\n{e.StackTrace}"
+                    $"@{BotService.CredentialsService.Credentials.TelegramUsername}, your bot is stuck due to:\n" + 
+                    GetExceptionInfo(e)
                 ).GetAwaiter().GetResult();
             }
+        }
+
+        private string GetExceptionInfo(Exception e)
+        {
+            if (e == null)
+                return "";
+
+            return $"{e.Message}\n\n{e.StackTrace}\n\n**********************\n\n{GetExceptionInfo(e)}";
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)

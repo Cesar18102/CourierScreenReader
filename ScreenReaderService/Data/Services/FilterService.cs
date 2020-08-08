@@ -71,6 +71,8 @@ namespace ScreenReaderService.Data.Services
 
         private bool Assert(string filter, string sample)
         {
+            return sample.Contains(filter);
+
             if (sample.Contains(filter))
                 return true;
 

@@ -65,7 +65,10 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     if (fromView == null || toView == null)
                         continue;
 
-                    Order order = new Order(BotService.StateService.StateInfo.IdCounter + i, fromView.Text, toView.Text);
+                    Order order = new Order(
+                        BotService.StateService.StateInfo.IdCounter + i, 
+                        fromView.Text, toView.Text
+                    );
 
                     if (deliveryTypeView != null && !string.IsNullOrEmpty(deliveryTypeView.Text))
                         order.Modifiers.Add(deliveryTypeView.Text);
@@ -76,13 +79,13 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     if (!BotService.FilterService.Assert(order))
                         continue;
 
-                    Click(child);
+                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
 
                     ++BotService.StateService.StateInfo.IdCounter;
                     BotService.StateService.StateInfo.DiscoveredOrder = order;
                     BotService.StateService.Save();
 
-                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
+                    Click(child);
 
                     break;
                 }

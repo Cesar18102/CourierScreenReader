@@ -4,6 +4,8 @@
     {
         public int MaxOrdersPerDay { get; set; }
         public int MaxActiveOrdersAtTime { get; set; }
+        public int MaxOrderPrice { get; set; }
+        public int MaxTotalSpent { get; set; }
 
         public override string ToString()
         {

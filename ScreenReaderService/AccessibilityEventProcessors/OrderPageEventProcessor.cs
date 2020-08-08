@@ -21,6 +21,10 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         private const string MESSAGE_TEXT_MONEY_PREFIX = "Для того чтобы принять этот заказ, у вас должно быть ";
         private const string MESSAGE_TEXT_MONEY_ENDIAN = " гривен наличных денег для выкупа отправления. Вы готовы выполнить этот заказ?";
 
+        private const string PRICE_LABEL_ID = "ua.ipost.work:id/tvValue";
+        private const string PRICE_TEXT_PREFIX = "Объявленная стоимость: ";
+        private const string PRICE_TEXT_ENDIAN = " грн";
+
         private const string OPTIONS_BUTTONS_WRAPPER_ID = "ua.ipost.work:id/fab_menu";
         private const string ACCEPT_ORDER_TEXT = "Принять заказ";
 
@@ -38,7 +42,7 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         {
             return e.Source != null &&
                    e.Source.ViewIdResourceName != OPTIONS_BUTTONS_WRAPPER_ID &&
-                  (e.Source.Parent == null || e.Source.Parent.ViewIdResourceName == OPTIONS_BUTTONS_WRAPPER_ID);
+                  (e.Source.Parent == null || e.Source.Parent.ViewIdResourceName != OPTIONS_BUTTONS_WRAPPER_ID);
         }
 
         public override async void ProcessEvent(AccessibilityEvent e)
@@ -65,6 +69,27 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 switch (State)
                 {
                     case ConfirmationState.INIT:
+
+                        int price = GetOrderPrice(root);
+                        if(price == -1)
+                        {
+                            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                            Back(root);
+                            return;
+                        }
+
+                        bool orderPriceGreaterThanMaxOrderPrice = price >= BotService.ConstraintsService.Constraints.MaxOrderPrice;
+                        bool orderPriceExceedsMaxTotalSpend = BotService.WorkService.WorkInfo.ActiveOrders.Sum(order => order.BuyPrice) + price >=
+                            BotService.ConstraintsService.Constraints.MaxTotalSpent;
+
+                        if(orderPriceGreaterThanMaxOrderPrice || orderPriceExceedsMaxTotalSpend)
+                        {
+                            ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
+                            Back(root);
+                            return;
+                        }
+
+                        BotService.StateService.StateInfo.DiscoveredOrder.BuyPrice = price;
 
                         if (OpenOptions(root))
                             State = ConfirmationState.OPENED;
@@ -94,6 +119,26 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 }
             }
             catch(Exception ex) { await NotifyException(ex); }
+        }
+
+        private int GetOrderPrice(AccessibilityNodeInfo root)
+        {
+            AccessibilityNodeInfo priceNode = root.FindAccessibilityNodeInfosByViewId(PRICE_LABEL_ID).FirstOrDefault();
+
+            if (priceNode == null || string.IsNullOrEmpty(priceNode.Text))
+            {
+                NeedGoBack = true;
+                return -1;
+            }
+
+            string priceText = priceNode.Text;
+            string priceStr = priceText.Replace(PRICE_TEXT_PREFIX, "").Replace(PRICE_TEXT_ENDIAN, "");
+
+            int price = 0;
+            if (Int32.TryParse(priceStr, out price))
+                return price;
+            else
+                return -1;
         }
 
         private bool OpenOptions(AccessibilityNodeInfo root)
