@@ -37,7 +37,7 @@ namespace Server.Services
             if (SessionService.IsActive(account.Id))
                 return SessionService.GetByAccountId(account.Id);
 
-            await PayService.CheckPaymentRequired(account.Id);
+            await PayService.CheckPaymentRequired(account.Login);
 
             return SessionService.CreateSessionFor(account.Id);
         }

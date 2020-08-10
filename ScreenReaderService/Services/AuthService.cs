@@ -1,11 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 using Autofac;
-using Newtonsoft.Json;
 using RestSharp;
+using Newtonsoft.Json;
 
 using ScreenReaderService.Dto;
+using ScreenReaderService.Util;
 
 namespace ScreenReaderService.Services
 {
@@ -13,8 +13,9 @@ namespace ScreenReaderService.Services
     {
         private SaltService SaltService = DependencyHolder.Dependencies.Resolve<SaltService>();
         private HashingService HashingService = DependencyHolder.Dependencies.Resolve<HashingService>();
+        private StatusCodeHandlerService StatusCodeHandlerService = DependencyHolder.Dependencies.Resolve<StatusCodeHandlerService>();
 
-        private const string LOG_IN_ENDPOINT = "http://courierbot2020.somee.com/api/auth/login";
+        private const string LOG_IN_ENDPOINT = "auth/login";
         public async Task LogIn(string login, string password)
         {
             LogInDto dto = new LogInDto();
@@ -24,16 +25,14 @@ namespace ScreenReaderService.Services
 
             string hashedPwd = HashingService.GetHash(password);
             dto.PasswordSalted = SaltService.GetSaltedHash(hashedPwd, dto.Salt);
-
-            RestClient client = new RestClient(LOG_IN_ENDPOINT);
+            
+            RestClient client = new RestClient(Constants.BASE_SERVER_ADDRESS + LOG_IN_ENDPOINT);
             RestRequest request = new RestRequest(Method.POST);
 
             request.AddJsonBody(JsonConvert.SerializeObject(dto));
 
             IRestResponse response = await client.ExecuteAsync(request);
-
-            if (!response.IsSuccessful)
-                throw new UnauthorizedAccessException();
+            StatusCodeHandlerService.HandleResponseStatus(response.StatusCode, response.Content);
         }
     }
 }

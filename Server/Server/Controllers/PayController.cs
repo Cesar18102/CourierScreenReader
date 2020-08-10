@@ -14,9 +14,9 @@ namespace Server.Controllers
         private static readonly PayService PayService = DependencyHolder.ServiceDependencies.Resolve<PayService>();
 
         [HttpGet]
-        public async Task<HttpResponseMessage> GetPaymentForm(int userId)
+        public async Task<HttpResponseMessage> GetPaymentForm(string login)
         {
-            return await Execute(async () => await PayService.GetPaymentForm(userId));
+            return await Execute(async () => await PayService.GetPaymentForm(login));
         }
 
         public async Task<HttpResponseMessage> HandlePaymentCallback(PaymentConfirmDto dto)

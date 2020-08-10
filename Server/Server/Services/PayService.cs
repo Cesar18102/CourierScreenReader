@@ -43,9 +43,9 @@ namespace Server.Services
 
         private IDictionary<string, PendingPayment> PendingPayments = new Dictionary<string, PendingPayment>();
 
-        private async Task<IEnumerable<OrderEntity>> GetOldUnpayedOrders(int userId)
+        private async Task<IEnumerable<OrderEntity>> GetOldUnpayedOrders(string login)
         {
-            IEnumerable<OrderEntity> orders = await OrderRepo.GetByTakerId(userId);
+            IEnumerable<OrderEntity> orders = await OrderRepo.GetByTakerLogin(login);
             return orders.Where(order => !order.Paid && (DateTime.Now - order.TakeDateTime).TotalMinutes > MAX_UPNPAYED_TIME);
         }
 
@@ -55,17 +55,17 @@ namespace Server.Services
             return (int)Math.Max(MIN_PAY, totalGain * PAY_PERCENT / 100);
         }
 
-        public async Task CheckPaymentRequired(int userId)
+        public async Task CheckPaymentRequired(string login)
         {
-            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(userId);
+            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(login);
 
             if (oldUnpayedOrders.Count() != 0)
                 throw new PaymentRequiredException(GetTaxAmount(oldUnpayedOrders));
         }
 
-        public async Task<SignedPaymentInfo> GetPaymentForm(int userId)
+        public async Task<SignedPaymentInfo> GetPaymentForm(string login)
         {
-            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(userId);
+            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(login);
 
             if (oldUnpayedOrders.Count() == 0)
                 throw new NotFoundException("orders to pay for");

@@ -38,6 +38,8 @@ namespace ScreenReaderService
             builder.RegisterType<SaltService>().AsSelf().SingleInstance();
             builder.RegisterType<AuthService>().AsSelf().SingleInstance();
 
+            builder.RegisterType<StatusCodeHandlerService>().AsSelf().SingleInstance();
+
             builder.RegisterType<Bot>().AsSelf().SingleInstance();
             builder.RegisterType<BotService>().AsSelf().SingleInstance();
 
@@ -47,12 +49,14 @@ namespace ScreenReaderService
             builder.RegisterType<ConstraintsConfigService>().AsSelf().SingleInstance();
             builder.RegisterType<CredentialsConfigService>().AsSelf().SingleInstance();
             builder.RegisterType<TextPreparationService>().AsSelf().SingleInstance();
+            builder.RegisterType<SessionService>().AsSelf().SingleInstance();
             builder.RegisterType<StateService>().AsSelf().SingleInstance();
             builder.RegisterType<WorkService>().AsSelf().SingleInstance();
 
             builder.RegisterType<OrderListPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<OrderPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<TakenOrderPageEventProcessor>().AsSelf().SingleInstance();
+            builder.RegisterType<LoginPageEventProcessor>().AsSelf().SingleInstance();
 
             builder.RegisterType<TelegramNotifier>().AsSelf().SingleInstance();
 

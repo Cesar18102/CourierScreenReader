@@ -34,7 +34,7 @@ namespace ScreenReaderService
             }
         }
 
-        private async Task CheckAuth()
+        public async Task CheckAuth()
         {
             await DependencyHolder.Dependencies.Resolve<AuthService>().LogIn(
                 BotService.CredentialsService.Credentials.Login,

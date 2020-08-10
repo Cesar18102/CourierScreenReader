@@ -72,27 +72,37 @@
   <ItemGroup>
     <Compile Include="AccessibilityEventProcessors\AccessabilityEventProcessorBase.cs" />
     <Compile Include="AccessibilityEventProcessors\IAccessabilityEventProcessor.cs" />
+    <Compile Include="AccessibilityEventProcessors\LoginPageEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\OrderListPageEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\OrderPageEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\TakenOrderPageEventProcessor.cs" />
     <Compile Include="Bot.cs" />
+    <Compile Include="Controls\LiqpayWebView.cs" />
     <Compile Include="Data\ConstraintsInfo.cs" />
     <Compile Include="Data\CredentialsInfo.cs" />
+    <Compile Include="Data\Exceptions\NotFoundException.cs" />
+    <Compile Include="Data\Exceptions\PaymentRequiredException.cs" />
+    <Compile Include="Data\Exceptions\ValidationException.cs" />
     <Compile Include="Data\FilterInfo.cs" />
     <Compile Include="Data\Order.cs" />
     <Compile Include="Data\ReplacementInfo.cs" />
+    <Compile Include="Data\ResponseError.cs" />
     <Compile Include="Data\Services\ConstraintsConfigService.cs" />
     <Compile Include="Data\Services\CredentialsConfigService.cs" />
     <Compile Include="Data\Services\FilterService.cs" />
     <Compile Include="Data\Services\ObjectFileMappingService.cs" />
+    <Compile Include="Data\Services\SessionService.cs" />
     <Compile Include="Data\Services\StateService.cs" />
     <Compile Include="Data\Services\TextPreparationService.cs" />
     <Compile Include="Data\Services\WorkService.cs" />
+    <Compile Include="Data\Session.cs" />
+    <Compile Include="Data\SignedPaymentInfo.cs" />
     <Compile Include="Data\WorkInfo.cs" />
     <Compile Include="Data\StateInfo.cs" />
     <Compile Include="Data\TextPreparationInfo.cs" />
     <Compile Include="DependencyHolder.cs" />
     <Compile Include="Dto\LogInDto.cs" />
+    <Compile Include="Dto\SessionDto.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -101,6 +111,7 @@
     <Compile Include="Services\BotService.cs" />
     <Compile Include="Services\HashingService.cs" />
     <Compile Include="Services\SaltService.cs" />
+    <Compile Include="Services\StatusCodeHandlerService.cs" />
     <Compile Include="Telegram\Command.cs" />
     <Compile Include="Telegram\CommandType.cs" />
     <Compile Include="Telegram\Message.cs" />
@@ -108,6 +119,7 @@
     <Compile Include="Telegram\TelegramNotifier.cs" />
     <Compile Include="Telegram\UpdateInfo.cs" />
     <Compile Include="Telegram\User.cs" />
+    <Compile Include="Util\Constants.cs" />
     <Compile Include="Util\FileManager.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +173,11 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\xml\serviceconfig.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\liqpay.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
