@@ -1,3 +1,8 @@
 /.vs
 /ScreenReaderService/bin
 /ScreenReaderService/obj
+
+/Server/.vs
+/Server/packages
+/Server/Server/bin
+/Server/Server/obj
