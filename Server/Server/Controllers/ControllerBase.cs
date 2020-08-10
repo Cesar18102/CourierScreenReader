@@ -21,6 +21,7 @@ namespace Server.Controllers
             { typeof(ValidationException), HttpStatusCode.BadRequest },
             { typeof(UnauthorizedAccessException), HttpStatusCode.Unauthorized },
             { typeof(NotFoundException), HttpStatusCode.NotFound },
+            { typeof(PaymentRequiredException), HttpStatusCode.PaymentRequired }
         };
 
         protected class Error

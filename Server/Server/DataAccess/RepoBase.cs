@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 
+using Server.Models.Exceptions;
 using Server.DataAccess.Entities;
 using Server.DataAccess.Attributes;
 
@@ -15,37 +16,43 @@ namespace Server.DataAccess
     public class RepoBase<TEntity> where TEntity : class, IEntity, new()
     {
         protected string ConnectionString { get; set; }
+
         protected string TableName { get; set; }
 
         protected string KeyColumnName { get; set; }
+        protected PropertyInfo KeyProperty { get; set; }
+
         protected IEnumerable<string> Columns { get; set; }
+        protected IEnumerable<PropertyInfo> Properties { get; set; }
+
         protected IEnumerable<string> ColumnsExceptKey { get; set; }
+        protected IEnumerable<PropertyInfo> PropertiesExceptKey { get; set; }
 
         public RepoBase(string connectionString)
         {
-            Columns = GetColumns();
-            KeyColumnName = GetKeyColumnName();
+            InitMetaData();
+            ConnectionString = connectionString;
+        }
+
+        private void InitMetaData()
+        {
+            KeyProperty = GetKeyProperty();
+            KeyColumnName = GetColumnByProperty(KeyProperty);
+
+            Properties = typeof(TEntity).GetProperties();
+            Columns = Properties.Select(property => GetColumnByProperty(property)).ToList();
+
+            PropertiesExceptKey = Properties.Where(property => property.Name != KeyProperty.Name).ToList();
             ColumnsExceptKey = Columns.Where(column => column != KeyColumnName).ToList();
 
-            ConnectionString = connectionString;
             TableName = typeof(TEntity).GetCustomAttribute<TableAttribute>()?.Name ?? nameof(TEntity).ToLower();
         }
 
-        private string GetKeyColumnName()
+        private PropertyInfo GetKeyProperty()
         {
-            PropertyInfo keyProperty = typeof(TEntity).GetProperties().FirstOrDefault(
+            return typeof(TEntity).GetProperties().FirstOrDefault(
                 property => property.Name.ToLower() == "id" || property.GetCustomAttribute<KeyAttribute>() != null
             );
-
-            if (keyProperty == null)
-                return null;
-
-            return GetColumnByProperty(keyProperty);
-        }
-
-        private IEnumerable<string> GetColumns()
-        {
-            return typeof(TEntity).GetProperties().Select(property => GetColumnByProperty(property)).ToList();
         }
 
         private IDictionary<string, object> GetParametersValues(IEnumerable<string> columns, TEntity entity)
@@ -58,6 +65,9 @@ namespace Server.DataAccess
 
         private string GetColumnByProperty(PropertyInfo property)
         {
+            if (property == null)
+                return null;
+
             return property.GetCustomAttribute<ColumnAttribute>()?.Name ?? property.Name.ToLower();
         }
 
@@ -186,11 +196,9 @@ namespace Server.DataAccess
             IDictionary<string, object> parametersValues = GetParametersValues(ColumnsExceptKey, entity);
             string parametersString = string.Join(",", parametersValues.Keys);
 
-            string insertText = //$"DECLARE @inserted TABLE(id INTEGER);\n" +
-                                $"INSERT INTO {TableName}({columns})\n" +
-                                $"OUTPUT INSERTED.ID\n" + // INTO @inserted\n" +
-                                $"VALUES({parametersString});\n";
-                                //$"SELECT * FROM @inserted;";
+            string insertText = $"INSERT INTO {TableName}({columns})\n" +
+                                $"OUTPUT INSERTED.ID\n" +
+                                $"VALUES({parametersString});";
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             using (SqlCommand inserter = new SqlCommand(insertText, connection))
             {
@@ -200,6 +208,48 @@ namespace Server.DataAccess
                 connection.Open();
                 return (int)await inserter.ExecuteScalarAsync();
             }
+        }
+
+        public async Task<TEntity> Update(TEntity entity)
+        {
+            int id = (int)KeyProperty.GetValue(entity);
+            TEntity current = await FirstOrDefault(stored => stored.Id, id);
+
+            if (current == null)
+                throw new NotFoundException("entity with such id");
+
+            IDictionary<string, object> changedColumns = new Dictionary<string, object>();
+            foreach(PropertyInfo property in PropertiesExceptKey)
+            {
+                object storedValue = property.GetValue(current);
+                object updatedValue = property.GetValue(entity);
+
+                if (storedValue.Equals(updatedValue))
+                    continue;
+
+                changedColumns.Add(GetColumnByProperty(property), updatedValue);
+            }
+
+            if (changedColumns.Count == 0)
+                return current;
+
+            IEnumerable<string> changeQueryItems = changedColumns.Select(change => $"{change.Key} = @{change.Key}");
+            string setString = string.Join(", ", changeQueryItems);
+
+            string updateText = $"UPDATE {TableName}\n" +
+                                $"SET {setString}\n" +
+                                $"WHERE {KeyColumnName} = {id};";
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlCommand updater = new SqlCommand(updateText, connection))
+            {
+                foreach (KeyValuePair<string, object> changedColumn in changedColumns)
+                    updater.Parameters.AddWithValue($"@{changedColumn.Key}", changedColumn.Value);
+
+                connection.Open();
+                await updater.ExecuteNonQueryAsync();
+            }
+
+            return await FirstOrDefault(updated => updated.Id, id);
         }
     }
 }

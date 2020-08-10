@@ -11,5 +11,8 @@ namespace Server.Models
         {
             Result = result;
         }
+
+        public static readonly LogicResult TRUE_RESULT = new LogicResult(true);
+        public static readonly LogicResult FALSE_RESULT = new LogicResult(false);
     }
 }

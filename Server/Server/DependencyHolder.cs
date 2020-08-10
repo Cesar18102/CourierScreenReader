@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Autofac;
 
 using Server.Services;
+using Server.API.LiqPay;
 using Server.DataAccess;
 using Server.DataAccess.Entities;
 
@@ -52,6 +53,9 @@ namespace Server
             builder.RegisterType<AccountService>().AsSelf().SingleInstance();
             builder.RegisterType<OrderService>().AsSelf().SingleInstance();
             builder.RegisterType<PayService>().AsSelf().SingleInstance();
+            builder.RegisterType<PasswordService>().AsSelf().SingleInstance();
+
+            builder.RegisterType<LiqPay>().AsSelf().SingleInstance();
 
             return builder.Build();
         }
@@ -64,6 +68,7 @@ namespace Server
 
             RegisterRepo<AccountRepo, AccountEntity>(builder, CONNECTION_STRING);
             RegisterRepo<OrderRepo, OrderEntity>(builder, CONNECTION_STRING);
+            RegisterRepo<PasswordRepo, PasswordEntity>(builder, CONNECTION_STRING);
 
             return builder.Build();
         }

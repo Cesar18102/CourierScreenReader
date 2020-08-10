@@ -34,10 +34,10 @@ namespace Server.Services
             if (originalPasswordSalted.ToUpper() != logInDto.PasswordSalted.ToUpper())
                 throw new UnauthorizedAccessException("Wrong password");
 
-            await PayService.CheckPaymentRequired(account.Id);
-
             if (SessionService.IsActive(account.Id))
                 return SessionService.GetByAccountId(account.Id);
+
+            await PayService.CheckPaymentRequired(account.Id);
 
             return SessionService.CreateSessionFor(account.Id);
         }

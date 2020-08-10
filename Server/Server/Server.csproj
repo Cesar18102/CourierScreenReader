@@ -137,11 +137,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="API\LiqPay\Dto\PaymentConfirmDto.cs" />
+    <Compile Include="API\LiqPay\Dto\PaymentStatusDto.cs" />
+    <Compile Include="API\LiqPay\LiqPay.cs" />
+    <Compile Include="API\LiqPay\Models\LiqPayPaymentInfo.cs" />
+    <Compile Include="API\LiqPay\Models\PaymentPrepareModel.cs" />
+    <Compile Include="API\LiqPay\Models\SignedPaymentInfo.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\ControllerBase.cs" />
     <Compile Include="Controllers\OrderController.cs" />
+    <Compile Include="Controllers\PasswordController.cs" />
     <Compile Include="Controllers\PayController.cs" />
     <Compile Include="DataAccess\AccountRepo.cs" />
     <Compile Include="DataAccess\Attributes\ColumnAttribute.cs" />
@@ -150,9 +157,12 @@
     <Compile Include="DataAccess\Entities\AccountEntity.cs" />
     <Compile Include="DataAccess\Entities\IEntity.cs" />
     <Compile Include="DataAccess\Entities\OrderEntity.cs" />
+    <Compile Include="DataAccess\Entities\PasswordEntity.cs" />
     <Compile Include="DataAccess\OrderRepo.cs" />
+    <Compile Include="DataAccess\PasswordRepo.cs" />
     <Compile Include="DataAccess\RepoBase.cs" />
     <Compile Include="DependencyHolder.cs" />
+    <Compile Include="Dto\ChangePasswordDto.cs" />
     <Compile Include="Dto\LogInDto.cs" />
     <Compile Include="Dto\OrderDto.cs" />
     <Compile Include="Dto\SessionDto.cs" />
@@ -171,6 +181,7 @@
     <Compile Include="Services\AccountService.cs" />
     <Compile Include="Services\HashingService.cs" />
     <Compile Include="Services\OrderService.cs" />
+    <Compile Include="Services\PasswordService.cs" />
     <Compile Include="Services\PayService.cs" />
     <Compile Include="Services\SessionService.cs" />
   </ItemGroup>

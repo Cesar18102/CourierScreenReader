@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 using Autofac;
 
+using Server.API.LiqPay;
+using Server.API.LiqPay.Dto;
+using Server.API.LiqPay.Models;
+
 using Server.Models.Exceptions;
 
 using Server.DataAccess;
@@ -16,33 +20,86 @@ namespace Server.Services
     {
         private const int MIN_PAY = 150; //uah
         private const int PAY_PERCENT = 30;
-        private const int MAX_UPNPAYED_TIME = 960; //in minutes
+        private const int MAX_UPNPAYED_TIME = 8 * 60;// 960; //in minutes
 
+        private const string CALLBACK_URL = "http://37.229.145.236:5000/api/pay/HandlePaymentCallback";
+
+        private static readonly LiqPay LiqPay = DependencyHolder.ServiceDependencies.Resolve<LiqPay>();
         private static readonly OrderRepo OrderRepo = DependencyHolder.RepoDependencies.Resolve<OrderRepo>();
 
-        public async Task CheckPaymentRequired(int userId)
+        public class PendingPayment
         {
-            IEnumerable<OrderEntity> orders = await OrderRepo.GetByTakerId(userId);
-            IEnumerable<OrderEntity> oldUnpayedOrders = orders.Where(
-                order => !order.Paid && (DateTime.Now - order.TakeDateTime).TotalMinutes > MAX_UPNPAYED_TIME
-            );
+            public string Id { get; private set; }
+            public SignedPaymentInfo PaymentInfo { get; private set; }
+            public IEnumerable<OrderEntity> PaidOrders { get; private set; }
 
-            if (oldUnpayedOrders.Count() != 0)
+            public PendingPayment(string id, SignedPaymentInfo paymentInfo, IEnumerable<OrderEntity> paidOrders)
             {
-                float totalGain = oldUnpayedOrders.Sum(order => order.Gain);
-                int ourTax = (int)Math.Max(MIN_PAY, totalGain * PAY_PERCENT / 100);
-                throw new PaymentRequiredException(ourTax);
+                Id = id;
+                PaymentInfo = paymentInfo;
+                PaidOrders = paidOrders;
             }
         }
 
-        public async Task GetPaymentForm(int userId)
+        private IDictionary<string, PendingPayment> PendingPayments = new Dictionary<string, PendingPayment>();
+
+        private async Task<IEnumerable<OrderEntity>> GetOldUnpayedOrders(int userId)
         {
-            //TODO
+            IEnumerable<OrderEntity> orders = await OrderRepo.GetByTakerId(userId);
+            return orders.Where(order => !order.Paid && (DateTime.Now - order.TakeDateTime).TotalMinutes > MAX_UPNPAYED_TIME);
         }
 
-        public async Task HandlePaymentCallback()
+        private int GetTaxAmount(IEnumerable<OrderEntity> orders)
         {
-            //TODO
+            float totalGain = orders.Sum(order => order.Gain);
+            return (int)Math.Max(MIN_PAY, totalGain * PAY_PERCENT / 100);
+        }
+
+        public async Task CheckPaymentRequired(int userId)
+        {
+            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(userId);
+
+            if (oldUnpayedOrders.Count() != 0)
+                throw new PaymentRequiredException(GetTaxAmount(oldUnpayedOrders));
+        }
+
+        public async Task<SignedPaymentInfo> GetPaymentForm(int userId)
+        {
+            IEnumerable<OrderEntity> oldUnpayedOrders = await GetOldUnpayedOrders(userId);
+
+            if (oldUnpayedOrders.Count() == 0)
+                throw new NotFoundException("orders to pay for");
+
+            int tax = GetTaxAmount(oldUnpayedOrders);
+            string id = Guid.NewGuid().ToString();
+
+            PaymentPrepareModel paymentPrepare = new PaymentPrepareModel(id, tax, CALLBACK_URL);
+            SignedPaymentInfo signedPayment = LiqPay.CreatePayment(paymentPrepare);
+            PendingPayment pending = new PendingPayment(id, signedPayment, oldUnpayedOrders);
+
+            PendingPayments.Add(id, pending);
+            return signedPayment;
+        }
+
+        public async Task<PendingPayment> HandlePaymentCallback(PaymentConfirmDto dto)
+        {
+            SignedPaymentInfo signed = new SignedPaymentInfo(dto.data, dto.signature);
+            string id = LiqPay.GetOrderId(signed);
+
+            if (!PendingPayments.ContainsKey(id))
+                throw new NotFoundException("payment with such id");
+
+            if (!LiqPay.IsSucceed(signed))
+                throw new ValidationException();
+
+            PendingPayment payment = PendingPayments[id];
+            if (!LiqPay.IsPaymentAuthorized(signed, payment.PaymentInfo))
+                throw new UnauthorizedAccessException();
+
+            foreach (OrderEntity order in payment.PaidOrders)
+                await OrderRepo.MarkPaid(order.Id);
+
+            return payment;
         }
     }
 }
