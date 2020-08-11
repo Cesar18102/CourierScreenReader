@@ -1,5 +1,11 @@
-﻿using Android.OS;
-using System.IO;
+﻿using System.IO;
+
+using Android.OS;
+
+using Autofac;
+
+using ScreenReaderService.Dto;
+using ScreenReaderService.Services;
 
 namespace ScreenReaderService.Data.Services
 {
@@ -17,6 +23,19 @@ namespace ScreenReaderService.Data.Services
         {
             get => Data;
             set => Data = value;
+        }
+
+        private SaltService SaltService = DependencyHolder.Dependencies.Resolve<SaltService>();
+
+        public SessionDto GetRandomSessionDto()
+        {
+            SessionDto dto = new SessionDto();
+
+            dto.UserId = Session.UserId;
+            dto.Salt = SaltService.GetRandomSalt();
+            dto.SessionTokenSalted = SaltService.GetSaltedHash(Session.Token, dto.Salt);
+
+            return dto;
         }
     }
 }

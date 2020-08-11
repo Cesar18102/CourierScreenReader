@@ -4,8 +4,10 @@ using Autofac;
 using RestSharp;
 using Newtonsoft.Json;
 
+using ScreenReaderService.Data;
 using ScreenReaderService.Dto;
 using ScreenReaderService.Util;
+using ScreenReaderService.Data.Services;
 
 namespace ScreenReaderService.Services
 {
@@ -14,6 +16,8 @@ namespace ScreenReaderService.Services
         private SaltService SaltService = DependencyHolder.Dependencies.Resolve<SaltService>();
         private HashingService HashingService = DependencyHolder.Dependencies.Resolve<HashingService>();
         private StatusCodeHandlerService StatusCodeHandlerService = DependencyHolder.Dependencies.Resolve<StatusCodeHandlerService>();
+
+        private SessionService SessionService = DependencyHolder.Dependencies.Resolve<SessionService>();
 
         private const string LOG_IN_ENDPOINT = "auth/login";
         public async Task LogIn(string login, string password)
@@ -32,7 +36,9 @@ namespace ScreenReaderService.Services
             request.AddJsonBody(JsonConvert.SerializeObject(dto));
 
             IRestResponse response = await client.ExecuteAsync(request);
+
             StatusCodeHandlerService.HandleResponseStatus(response.StatusCode, response.Content);
+            SessionService.Session = JsonConvert.DeserializeObject<Session>(response.Content);
         }
     }
 }

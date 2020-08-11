@@ -40,7 +40,7 @@ namespace ScreenReaderService
                 {
                     Task.Run(async () => await Bot.CheckAuth()).GetAwaiter().GetResult();
 
-                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<LoginPageEventProcessor>();
+                    ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<LoginEventProcessor>();
 
                     Intent intentToAccessibility = new Intent(
                         this, typeof(ScreenReader)

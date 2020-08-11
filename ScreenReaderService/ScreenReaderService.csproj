@@ -72,7 +72,7 @@
   <ItemGroup>
     <Compile Include="AccessibilityEventProcessors\AccessabilityEventProcessorBase.cs" />
     <Compile Include="AccessibilityEventProcessors\IAccessabilityEventProcessor.cs" />
-    <Compile Include="AccessibilityEventProcessors\LoginPageEventProcessor.cs" />
+    <Compile Include="AccessibilityEventProcessors\LoginEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\OrderListPageEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\OrderPageEventProcessor.cs" />
     <Compile Include="AccessibilityEventProcessors\TakenOrderPageEventProcessor.cs" />
@@ -101,15 +101,23 @@
     <Compile Include="Data\StateInfo.cs" />
     <Compile Include="Data\TextPreparationInfo.cs" />
     <Compile Include="DependencyHolder.cs" />
+    <Compile Include="Dto\ChangePasswordDto.cs" />
     <Compile Include="Dto\LogInDto.cs" />
+    <Compile Include="Dto\OrderDto.cs" />
     <Compile Include="Dto\SessionDto.cs" />
+    <Compile Include="Dto\TakeOrderDto.cs" />
+    <Compile Include="Gestures\OpenSideMenuGestureService.cs" />
+    <Compile Include="Gestures\UpdateGestureService.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScreenReader.cs" />
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\BotService.cs" />
+    <Compile Include="Gestures\GestureServiceBase.cs" />
     <Compile Include="Services\HashingService.cs" />
+    <Compile Include="Services\OrderService.cs" />
+    <Compile Include="Services\PasswordService.cs" />
     <Compile Include="Services\SaltService.cs" />
     <Compile Include="Services\StatusCodeHandlerService.cs" />
     <Compile Include="Telegram\Command.cs" />

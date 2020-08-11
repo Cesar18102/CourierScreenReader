@@ -121,6 +121,9 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         private async Task Skip(string reason, AccessibilityNodeInfo root) 
         {
+            BotService.StateService.StateInfo.DiscoveredOrder = null;
+            BotService.StateService.Save();
+
             await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder} skipped due to '{reason}'");
             ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
             Back(root);

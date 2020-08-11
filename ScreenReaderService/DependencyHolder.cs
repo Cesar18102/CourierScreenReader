@@ -6,6 +6,7 @@ using Autofac;
 using ScreenReaderService.Util;
 using ScreenReaderService.Telegram;
 using ScreenReaderService.Services;
+using ScreenReaderService.Gestures;
 using ScreenReaderService.Data.Services;
 using ScreenReaderService.AccessibilityEventProcessors;
 
@@ -37,6 +38,8 @@ namespace ScreenReaderService
                    .AsSelf().SingleInstance();
             builder.RegisterType<SaltService>().AsSelf().SingleInstance();
             builder.RegisterType<AuthService>().AsSelf().SingleInstance();
+            builder.RegisterType<PasswordService>().AsSelf().SingleInstance();
+            builder.RegisterType<OrderService>().AsSelf().SingleInstance();
 
             builder.RegisterType<StatusCodeHandlerService>().AsSelf().SingleInstance();
 
@@ -56,9 +59,12 @@ namespace ScreenReaderService
             builder.RegisterType<OrderListPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<OrderPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<TakenOrderPageEventProcessor>().AsSelf().SingleInstance();
-            builder.RegisterType<LoginPageEventProcessor>().AsSelf().SingleInstance();
+            builder.RegisterType<LoginEventProcessor>().AsSelf().SingleInstance();
 
             builder.RegisterType<TelegramNotifier>().AsSelf().SingleInstance();
+
+            builder.RegisterType<UpdateGestureService>().AsSelf().SingleInstance();
+            builder.RegisterType<OpenSideMenuGestureService>().AsSelf().SingleInstance();
 
             return builder.Build();
         }

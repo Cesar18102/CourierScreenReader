@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Autofac;
 
@@ -11,7 +10,6 @@ using Server.Models.Exceptions;
 
 using Server.DataAccess;
 using Server.DataAccess.Entities;
-using System.Linq;
 
 namespace Server.Services
 {
@@ -37,7 +35,7 @@ namespace Server.Services
             if (SessionService.IsActive(account.Id))
                 return SessionService.GetByAccountId(account.Id);
 
-            await PayService.CheckPaymentRequired(account.Login);
+            //await PayService.CheckPaymentRequired(account.Login);
 
             return SessionService.CreateSessionFor(account.Id);
         }

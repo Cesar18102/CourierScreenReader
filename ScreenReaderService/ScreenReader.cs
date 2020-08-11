@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Android.App;
 using Android.Content;
-using Android.Graphics;
 using Android.Views.Accessibility;
 using Android.AccessibilityServices;
 
@@ -15,16 +15,15 @@ namespace ScreenReaderService
     [MetaData("android.accessibilityservice", Resource = "@xml/serviceconfig")]
     public class ScreenReader : AccessibilityService
     {
-        private const int UPDATE_DELAY = 1000;
-        private const int UPDATE_GESTURE_DURATION = 500;
+        private const int GESTURE_DELAY = 1000;
 
-        public static bool UpdateNeeded { get; set; }
         public static IAccessabilityEventProcessor EventProcessor { get; set; }
+        public static Queue<GestureDescription> GesturesToPerform { get; private set; } = new Queue<GestureDescription>();
 
         protected override void OnServiceConnected()
         {
             base.OnServiceConnected();
-            //StartUpdating();
+            StartWaitingForGestures();
         }
 
         public override void OnAccessibilityEvent(AccessibilityEvent e)
@@ -40,40 +39,20 @@ namespace ScreenReaderService
 
         }
 
-
-        public async void StartUpdating()
+        public async void StartWaitingForGestures()
         {
             while(true)
             {
-                await Task.Delay(UPDATE_DELAY);
+                await Task.Delay(GESTURE_DELAY);
 
-                if(UpdateNeeded)
-                {
-                    Update();
-                    UpdateNeeded = false;
-                }
+                if(GesturesToPerform.Count != 0)
+                    PerformGesture(GesturesToPerform.Dequeue());
             }
         }
 
-        public void Update()
+        public void PerformGesture(GestureDescription gesture)
         {
-            float x = Resources.DisplayMetrics.WidthPixels / 2;
-            float yStart = Resources.DisplayMetrics.HeightPixels / 3;
-            float yEnd = Resources.DisplayMetrics.HeightPixels * 2 / 3;
-
-            Path path = new Path();
-
-            path.MoveTo(x, yStart);
-            path.LineTo(x, yEnd);
-
-            GestureDescription.StrokeDescription stroke = new GestureDescription.StrokeDescription(
-                path, 0, UPDATE_GESTURE_DURATION
-            );
-
-            GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-            gestureBuilder.AddStroke(stroke);
-
-            DispatchGesture(gestureBuilder.Build(), null, null);
+            DispatchGesture(gesture, null, null);
         }
     }
 }
