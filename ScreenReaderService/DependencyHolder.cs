@@ -45,6 +45,7 @@ namespace ScreenReaderService
 
             builder.RegisterType<Bot>().AsSelf().SingleInstance();
             builder.RegisterType<BotService>().AsSelf().SingleInstance();
+            builder.RegisterType<BadOrdersService>().AsSelf().SingleInstance();
 
             builder.RegisterType<FileManager>().AsSelf().SingleInstance();
 
@@ -61,7 +62,8 @@ namespace ScreenReaderService
             builder.RegisterType<TakenOrderPageEventProcessor>().AsSelf().SingleInstance();
             builder.RegisterType<LoginEventProcessor>().AsSelf().SingleInstance();
 
-            builder.RegisterType<TelegramNotifier>().AsSelf().SingleInstance();
+            //builder.RegisterType<TelegramNotifier>().AsSelf().SingleInstance();
+            builder.RegisterType<TelegramNotifierWithLogging>().As<TelegramNotifier>().SingleInstance();
 
             builder.RegisterType<UpdateGestureService>().AsSelf().SingleInstance();
             builder.RegisterType<OpenSideMenuGestureService>().AsSelf().SingleInstance();

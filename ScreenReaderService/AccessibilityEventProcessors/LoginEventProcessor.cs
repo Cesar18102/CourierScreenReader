@@ -1,8 +1,9 @@
 ﻿using System.Linq;
 
+using Android.Views.Accessibility;
+
 using Autofac;
 
-using Android.Views.Accessibility;
 using ScreenReaderService.Services;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
@@ -36,7 +37,10 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             if (listTextNode != null && mapTextNode != null)
             {
                 ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
-                await PasswordService.UpdatePassword(TempPasswordValue);
+
+                if (!string.IsNullOrEmpty(TempPasswordValue))
+                    await PasswordService.UpdatePassword(TempPasswordValue);
+
                 return;
             }
 

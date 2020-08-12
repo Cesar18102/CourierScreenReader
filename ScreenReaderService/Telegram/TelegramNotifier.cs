@@ -19,7 +19,8 @@ namespace ScreenReaderService.Telegram
         private const string GET_UPDATES_ENDPOINT = "getUpdates";
 
         private const string TOKEN = "1257258578:AAFcCEnEkga8jS3nJ6jjRizx_Qudfgx9hME";
-        private static string CURRENT_CHAT_ID { get; set; }
+
+        private string CURRENT_CHAT_ID { get; set; }
 
         private static TelegramBotCommandParser CommandParser = new TelegramBotCommandParser();
 
@@ -73,25 +74,30 @@ namespace ScreenReaderService.Telegram
             return JsonConvert.DeserializeObject<TelegramUpdatesInfo>(response.Content);
         }
 
-        public async Task NotifyMessage(string message)
+        public virtual async Task NotifyMessage(string message)
+        {
+            await NotifySplitMessage(message, CURRENT_CHAT_ID);
+        }
+
+        protected async Task NotifySplitMessage(string message, string chatId)
         {
             int messagePartsCount = (int)Math.Ceiling((float)message.Length / MAX_MESSAGE_LENGTH);
 
-            for(int i = 0; i < messagePartsCount; ++i)
+            for (int i = 0; i < messagePartsCount; ++i)
             {
                 int subMessageLength = Math.Min(MAX_MESSAGE_LENGTH, message.Length - i * MAX_MESSAGE_LENGTH);
                 string subMessage = message.Substring(i * MAX_MESSAGE_LENGTH, subMessageLength);
-                await SendMessage(subMessage);
+                await SendMessage(subMessage, chatId);
             }
         }
 
-        private async Task SendMessage(string message)
+        protected async Task SendMessage(string message, string chatId)
         {
             RestClient client = new RestClient($"{BOT_ENDPOINT}{TOKEN}/{SEND_MESSAGE_ENDPOINT}") { Timeout = -1 };
             RestRequest request = new RestRequest(Method.POST);
 
             TelegramMessageDto dto = new TelegramMessageDto(
-                CURRENT_CHAT_ID, message
+                chatId, message
             );
 
             string json = JsonConvert.SerializeObject(dto);
@@ -100,7 +106,7 @@ namespace ScreenReaderService.Telegram
             IRestResponse response = await client.ExecuteAsync(request);
         }
 
-        private class TelegramUpdatesInfo
+        protected class TelegramUpdatesInfo
         {
             [JsonProperty("ok")]
             public bool Status { get; private set; }
@@ -109,7 +115,7 @@ namespace ScreenReaderService.Telegram
             public IEnumerable<UpdateInfo> Updates { get; private set; }
         }
 
-        private class TelegramMessageDto
+        protected class TelegramMessageDto
         {
             [JsonProperty("chat_id")]
             public string ChatId { get; private set; }

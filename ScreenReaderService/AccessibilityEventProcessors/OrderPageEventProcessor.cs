@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Android.Views.Accessibility;
 
 using Autofac;
+
+using ScreenReaderService.Data.Exceptions;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {
@@ -77,17 +80,19 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                             return;
                         }
 
-                        bool orderPriceGreaterThanMaxOrderPrice = price >= BotService.ConstraintsService.Constraints.MaxOrderPrice;
-                        bool orderPriceExceedsMaxTotalSpend = BotService.WorkService.WorkInfo.ActiveOrders.Sum(order => order.BuyPrice) + price >=
-                            BotService.ConstraintsService.Constraints.MaxTotalSpent;
+                        BotService.StateService.StateInfo.DiscoveredOrder.BuyPrice = price;
 
-                        if(orderPriceGreaterThanMaxOrderPrice || orderPriceExceedsMaxTotalSpend)
+                        try
                         {
-                            await Skip("Buy price exceeded", root);
+                            BotService.ConstraintsService.PostOpenCheckOrderPassesConstraints(
+                                BotService.StateService.StateInfo.DiscoveredOrder
+                            );
+                        }
+                        catch(ConstraintNotPassedException ex)
+                        {
+                            await Skip(ex.Reason, root);
                             return;
                         }
-
-                        BotService.StateService.StateInfo.DiscoveredOrder.BuyPrice = price;
 
                         if (OpenOptions(root))
                             State = ConfirmationState.OPENED;
@@ -121,10 +126,14 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         private async Task Skip(string reason, AccessibilityNodeInfo root) 
         {
+            BotService.BadOrdersService.OrdersBlackList.Add(
+                BotService.StateService.StateInfo.DiscoveredOrder
+            );
+
             BotService.StateService.StateInfo.DiscoveredOrder = null;
             BotService.StateService.Save();
 
-            await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder} skipped due to '{reason}'");
+            await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder}\n skipped and blacklisted due to '{reason}'");
             ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
             Back(root);
         }

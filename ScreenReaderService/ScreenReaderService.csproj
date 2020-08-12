@@ -81,6 +81,7 @@
     <Compile Include="Data\ConstraintsInfo.cs" />
     <Compile Include="Data\CredentialsInfo.cs" />
     <Compile Include="Data\Exceptions\NotFoundException.cs" />
+    <Compile Include="Data\Exceptions\ConstraintNotPassedException.cs" />
     <Compile Include="Data\Exceptions\PaymentRequiredException.cs" />
     <Compile Include="Data\Exceptions\ValidationException.cs" />
     <Compile Include="Data\FilterInfo.cs" />
@@ -113,6 +114,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScreenReader.cs" />
     <Compile Include="Services\AuthService.cs" />
+    <Compile Include="Data\Services\BadOrdersService.cs" />
     <Compile Include="Services\BotService.cs" />
     <Compile Include="Gestures\GestureServiceBase.cs" />
     <Compile Include="Services\HashingService.cs" />
@@ -125,6 +127,7 @@
     <Compile Include="Telegram\Message.cs" />
     <Compile Include="Telegram\TelegramBotCommandParser.cs" />
     <Compile Include="Telegram\TelegramNotifier.cs" />
+    <Compile Include="Telegram\TelegramNotifierWithLogging.cs" />
     <Compile Include="Telegram\UpdateInfo.cs" />
     <Compile Include="Telegram\User.cs" />
     <Compile Include="Util\Constants.cs" />

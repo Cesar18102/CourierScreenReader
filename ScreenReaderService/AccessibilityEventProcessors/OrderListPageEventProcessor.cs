@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using Android.Views.Accessibility;
 
 using Autofac;
 
-using ScreenReaderService.Data;
 using ScreenReaderService.Gestures;
+
+using ScreenReaderService.Data;
+using ScreenReaderService.Data.Exceptions;
 
 namespace ScreenReaderService.AccessibilityEventProcessors
 {
@@ -24,14 +27,12 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         private const string STATUS_AVAILABLE = "Доступно";
 
-        private const string TIME_TRASH_PREFIX_TAKE = "Забрать ";
-        private const string TIME_TRASH_PREFIX_DELIVER = "Доставить ";
+        private const string TODAY = "сегодня";
+        private const string TODAY_ENG_C = "cегодня";
+        private const string TOMORROW = "завтра";
 
-        private const string TIME_TODAY = "сегодня: ";
-        private const string TIME_TOMORROW = "завтра: ";
-
-        private const string FROM_TEXT = "с";
-        private const string UNTIL_TEXT = "до";
+        private static readonly Regex TAKE_TIME_REGEX = new Regex($"Забрать\\s*({TODAY}|{TODAY_ENG_C}|{TOMORROW})\\s*:\\s*с\\s*(\\d+)\\s*:\\s*(\\d+)\\s*до\\s*(\\d+)\\s*:\\s*(\\d+)");
+        private static readonly Regex DELIVER_TIME_REGEX = new Regex($"Доставить\\s*({TODAY}|{TODAY_ENG_C}|{TOMORROW})\\s*:\\s*с\\s*(\\d+)\\s*:\\s*(\\d+)\\s*до\\s*(\\d+)\\s*:\\s*(\\d+)");
 
         private UpdateGestureService UpdateGestureService = DependencyHolder.Dependencies.Resolve<UpdateGestureService>();
 
@@ -46,24 +47,16 @@ namespace ScreenReaderService.AccessibilityEventProcessors
             {
                 DateTime start = DateTime.Now;
 
-                if (BotService.WorkService.WorkInfo.ActiveOrders.Count == BotService.ConstraintsService.Constraints.MaxActiveOrdersAtTime)
-                {
-                    await Notifier.NotifyMessage("Scanning skipped due to: 'active orders count exceeded'");
-                    return;
-                }
-
-                int todayTakenOrdersCount = BotService.WorkService.WorkInfo.ActiveOrders.Count + 
-                                            BotService.WorkService.WorkInfo.DoneOrders.Count;
-
-                if (todayTakenOrdersCount == BotService.ConstraintsService.Constraints.MaxOrdersPerDay)
-                {
-                    await Notifier.NotifyMessage("Scanning skipped due to: 'daily orders count exceeded'");
-                    return;
-                }
-
                 if (BotService.StateService.StateInfo.Paused)
                 {
                     await Notifier.NotifyMessage("Scanning skipped due to: 'bot paused'");
+                    return;
+                }
+
+                try { BotService.ConstraintsService.CheckInvariantConstraintsPassed(); }
+                catch(ConstraintNotPassedException ex)
+                {
+                    await Notifier.NotifyMessage($"Scanning skipped due to: '{ex.Reason}'");
                     return;
                 }
 
@@ -108,14 +101,36 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                     AccessibilityNodeInfo fromTimeNode = child.FindAccessibilityNodeInfosByViewId(ORDER_TAKE_TIME_ID).FirstOrDefault();
                     if (fromTimeNode != null && !string.IsNullOrEmpty(fromTimeNode.Text))
-                        order.TakeTime = GetDateTimeFromText(fromTimeNode.Text);
+                    {
+                        (DateTime min, DateTime max)? takeTime = GetPeriodFromText(fromTimeNode.Text, TAKE_TIME_REGEX);
+
+                        if (takeTime.HasValue)
+                        {
+                            order.MinTakeTime = takeTime.Value.min;
+                            order.MaxTakeTime = takeTime.Value.max;
+                        }
+                    }
 
                     AccessibilityNodeInfo toTimeNode = child.FindAccessibilityNodeInfosByViewId(ORDER_DELIVER_TIME_ID).FirstOrDefault();
                     if (toTimeNode != null && !string.IsNullOrEmpty(toTimeNode.Text))
-                        order.DeliverTime = GetDateTimeFromText(toTimeNode.Text);
+                    {
+                        (DateTime min, DateTime max)? deliverTime = GetPeriodFromText(toTimeNode.Text, DELIVER_TIME_REGEX);
+
+                        if (deliverTime.HasValue)
+                        {
+                            order.MinDeliverTime = deliverTime.Value.min;
+                            order.MaxDeliverTime = deliverTime.Value.max;
+                        }
+                    }
+
+                    if (BotService.BadOrdersService.OrdersBlackList.Contains(order))
+                        continue;
 
                     if (!BotService.FilterService.Assert(order))
                         continue;
+
+                    try { BotService.ConstraintsService.PreOpenCheckOrderPassesConstraints(order); }
+                    catch (ConstraintNotPassedException ex) { continue; }
 
                     ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderPageEventProcessor>();
 
@@ -130,17 +145,36 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
                 TimeSpan duration = DateTime.Now - start;
 
-                await Notifier.NotifyMessage($"Scanning {list.ChildCount} orders took {duration.TotalMilliseconds} ms");
+                await Notifier.NotifyMessage($"Scanning took {duration.TotalMilliseconds} ms ({list.ChildCount} orders)");
 
                 //ScreenReader.GesturesToPerform.Enqueue(UpdateGestureService.Gesture);
             }
             catch (Exception ex) { await NotifyException(ex); }
         }
 
-        private DateTime? GetDateTimeFromText(string text)
+        private (DateTime min, DateTime max)? GetPeriodFromText(string text, Regex timeParseRegex)
         {
-            //TODO
-            return null;
+            MatchCollection matches = timeParseRegex.Matches(text);
+
+            if (matches.Count == 0)
+                return null;
+
+            DateTime now = DateTime.Now;
+
+            DateTime min = GetDateTimeFromMatch(now, matches[0], 1, 2, 3);
+            DateTime max = GetDateTimeFromMatch(now, matches[0], 1, 4, 5);
+
+            return (min, max);
+        }
+
+        private DateTime GetDateTimeFromMatch(DateTime now, Match match, int dayGroupNumber, int hourGroupNumber, int minuteGroupNumber)
+        {
+            int hour = Convert.ToInt32(match.Groups[hourGroupNumber].Value);
+            int minute = Convert.ToInt32(match.Groups[minuteGroupNumber].Value);
+
+            DateTime dateTime = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
+
+            return match.Groups[dayGroupNumber].Value == TOMORROW ? dateTime.AddDays(1) : dateTime;
         }
     }
 }

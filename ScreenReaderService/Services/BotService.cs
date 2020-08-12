@@ -9,6 +9,7 @@ namespace ScreenReaderService.Services
         public WorkService WorkService = DependencyHolder.Dependencies.Resolve<WorkService>();
         public StateService StateService = DependencyHolder.Dependencies.Resolve<StateService>();
         public FilterService FilterService = DependencyHolder.Dependencies.Resolve<FilterService>();
+        public BadOrdersService BadOrdersService = DependencyHolder.Dependencies.Resolve<BadOrdersService>();
         public ConstraintsConfigService ConstraintsService = DependencyHolder.Dependencies.Resolve<ConstraintsConfigService>();
         public CredentialsConfigService CredentialsService = DependencyHolder.Dependencies.Resolve<CredentialsConfigService>();
         public TextPreparationService TextPreparationService = DependencyHolder.Dependencies.Resolve<TextPreparationService>();
