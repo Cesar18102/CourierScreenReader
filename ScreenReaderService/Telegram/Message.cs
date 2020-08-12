@@ -12,5 +12,8 @@ namespace ScreenReaderService.Telegram
 
         [JsonProperty("text")]
         public string Text { get; private set; }
+
+        [JsonProperty("date")]
+        public int Date { get; private set; }
     }
 }

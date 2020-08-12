@@ -16,8 +16,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         private const string PWD_INPUT_ID = "ua.ipost.work:id/passInput";
         private const string PWD_PLACEHOLDER_TEXT = "Пароль";
 
-        //private const string WRONG_CREDS_ERROR_TEXT = "Неверный логин или пароль.";
-
         private string TempPasswordValue { get; set; }
         private PasswordService PasswordService = DependencyHolder.Dependencies.Resolve<PasswordService>();
 
@@ -29,7 +27,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         public override async void ProcessEvent(AccessibilityEvent e)
         {
             AccessibilityNodeInfo root = GetRoot(e.Source);
-            string json = GetAllText(root);
 
             AccessibilityNodeInfo listTextNode = root.FindAccessibilityNodeInfosByText(LOGGED_IN_INDICATOR_LIST_TEXT).FirstOrDefault();
             AccessibilityNodeInfo mapTextNode = root.FindAccessibilityNodeInfosByText(LOGGED_IN_INDICATOR_MAP_TEXT).FirstOrDefault();

@@ -14,6 +14,7 @@ namespace ScreenReaderService.Telegram
         private const string BOT_ENDPOINT = "https://api.telegram.org/bot";
 
         private const int MAX_MESSAGE_LENGTH = 4096;
+        private const int MESSAGE_GET_OLD_TIME = 5000;
 
         private const string SEND_MESSAGE_ENDPOINT = "sendMessage";
         private const string GET_UPDATES_ENDPOINT = "getUpdates";
@@ -40,6 +41,12 @@ namespace ScreenReaderService.Telegram
                 {
                     if (!UsernameEquals(update.Message.Sender.Username, username))
                     {
+                        DateTimeOffset messageTime = DateTimeOffset.FromUnixTimeSeconds(update.Message.Date);
+                        TimeSpan messageAge = DateTimeOffset.Now - messageTime;
+
+                        if (messageAge.TotalMilliseconds >= MESSAGE_GET_OLD_TIME)
+                            continue;
+
                         await GetUpdates(update.Id); //forgetting old or useless updates
                         return commands;
                     }

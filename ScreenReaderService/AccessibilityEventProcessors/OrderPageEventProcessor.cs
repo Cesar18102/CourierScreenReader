@@ -28,6 +28,11 @@ namespace ScreenReaderService.AccessibilityEventProcessors
         private const string PRICE_TEXT_PREFIX = "Объявленная стоимость: ";
         private const string PRICE_TEXT_ENDIAN = " грн";
 
+        private const string DESCRIPTION_ID = "ua.ipost.work:id/tvDescr";
+        private const string CLIENT_ORDER_ID_ID = "ua.ipost.work:id/tvNumberClient";
+        private const string SENDER_COMMENT_ID = "ua.ipost.work:id/tvCommentFrom";
+        private const string RECIEVER_COMMENT_ID = "ua.ipost.work:id/tvComment";
+
         private const string OPTIONS_BUTTONS_WRAPPER_ID = "ua.ipost.work:id/fab_menu";
         private const string ACCEPT_ORDER_TEXT = "Принять заказ";
 
@@ -76,11 +81,23 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                         int price = GetOrderPrice(root);
                         if(price == -1)
                         {
-                            await Skip("Buy price info not found", root);
+                            //await Skip("Buy price info not found", root);
                             return;
                         }
 
                         BotService.StateService.StateInfo.DiscoveredOrder.BuyPrice = price;
+
+                        AccessibilityNodeInfo descriptionNode = root.FindAccessibilityNodeInfosByViewId(DESCRIPTION_ID).FirstOrDefault();
+                        BotService.StateService.StateInfo.DiscoveredOrder.Description = descriptionNode?.Text;
+
+                        AccessibilityNodeInfo clientOrderId = root.FindAccessibilityNodeInfosByViewId(CLIENT_ORDER_ID_ID).FirstOrDefault();
+                        BotService.StateService.StateInfo.DiscoveredOrder.ClientOrderId = clientOrderId?.Text;
+
+                        AccessibilityNodeInfo senderComment = root.FindAccessibilityNodeInfosByViewId(SENDER_COMMENT_ID).FirstOrDefault();
+                        BotService.StateService.StateInfo.DiscoveredOrder.SenderComment = senderComment?.Text;
+
+                        AccessibilityNodeInfo recieverComment = root.FindAccessibilityNodeInfosByViewId(RECIEVER_COMMENT_ID).FirstOrDefault();
+                        BotService.StateService.StateInfo.DiscoveredOrder.RecieverComment = recieverComment?.Text;
 
                         try
                         {
@@ -90,6 +107,10 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                         }
                         catch(ConstraintNotPassedException ex)
                         {
+                            BotService.BadOrdersService.OrdersBlackList.Add(
+                                BotService.StateService.StateInfo.DiscoveredOrder
+                            );
+
                             await Skip(ex.Reason, root);
                             return;
                         }
@@ -126,14 +147,11 @@ namespace ScreenReaderService.AccessibilityEventProcessors
 
         private async Task Skip(string reason, AccessibilityNodeInfo root) 
         {
-            BotService.BadOrdersService.OrdersBlackList.Add(
-                BotService.StateService.StateInfo.DiscoveredOrder
-            );
+            await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder.ToString()}\n skipped due to '{reason}'");
 
             BotService.StateService.StateInfo.DiscoveredOrder = null;
             BotService.StateService.Save();
 
-            await Notifier.NotifyMessage($"{BotService.StateService.StateInfo.DiscoveredOrder}\n skipped and blacklisted due to '{reason}'");
             ScreenReader.EventProcessor = DependencyHolder.Dependencies.Resolve<OrderListPageEventProcessor>();
             Back(root);
         }

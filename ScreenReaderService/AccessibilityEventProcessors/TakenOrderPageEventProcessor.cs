@@ -30,11 +30,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 AccessibilityNodeInfo root = GetRoot(e.Source);
                 AccessibilityNodeInfo message = root.FindAccessibilityNodeInfosByViewId(ORDER_TAKEN_MESSAGE_ID).FirstOrDefault();
 
-                /*/////TEMP
-                string endPageJson = GetAllText(root);
-                await Notifier.NotifyMessage("**END PAGE JSON**\n" + endPageJson);
-                //////TEMP*/
-
                 if (message != null && message.Text == ORDER_TAKEN_MESSAGE_TEXT)
                 {
                     BotService.WorkService.WorkInfo.ActiveOrders.Add(
@@ -56,6 +51,11 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                     NeedGoBack = true;
                     return;
                 }
+
+                /////TEMP
+                string endPageJson = GetAllText(root);
+                await Notifier.NotifyMessage("**END PAGE JSON**\n" + endPageJson);
+                //////TEMP
 
                 if (NeedGoBack && Back(root))
                 {

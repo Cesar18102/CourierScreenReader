@@ -13,6 +13,12 @@ namespace ScreenReaderService.Data
         public int Gain { get; private set; }
         public int BuyPrice { get; set; }
 
+        public string Description { get; set; }
+        public string ClientOrderId { get; set; }
+
+        public string SenderComment { get; set; }
+        public string RecieverComment { get; set; }
+
         public DateTime? MinTakeTime { get; set; }
         public DateTime? MaxTakeTime { get; set; }
 
@@ -39,7 +45,11 @@ namespace ScreenReaderService.Data
                    $"Buy price: {BuyPrice}\n" +
                    $"Gain: {Gain}\n" +
                    $"Take time: {MinTakeTime.ToString()} - {MaxTakeTime.ToString()}\n" +
-                   $"Deliver time: {MinDeliverTime.ToString()} - {MaxDeliverTime.ToString()}";
+                   $"Deliver time: {MinDeliverTime.ToString()} - {MaxDeliverTime.ToString()}\n" +
+                   $"Description: {Description}\n" +
+                   $"Client order number: {ClientOrderId}\n" +
+                   $"Sender comment: {SenderComment}\n" +
+                   $"Reciever comment: {RecieverComment}";
         }
 
         public bool Equals(Order other)

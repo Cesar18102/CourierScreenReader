@@ -63,8 +63,6 @@ namespace ScreenReaderService.AccessibilityEventProcessors
                 AccessibilityNodeInfo root = GetRoot(e.Source);
                 AccessibilityNodeInfo list = root.FindAccessibilityNodeInfosByViewId(ORDER_LIST_ID).FirstOrDefault();
 
-                string json = GetAllText(root);
-
                 if (list == null || list.ChildCount == 0)
                 {
                     await Notifier.NotifyMessage("Scanning skipped due to: 'no orders listed'");
