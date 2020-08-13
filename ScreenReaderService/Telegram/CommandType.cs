@@ -9,6 +9,8 @@
         GET_CONSTRAINTS_INFO,
         GET_ACTIVE_LIST,
         GET_DAY_HISTORY,
-        CLEAR_DAY_HISTORY
+        CLEAR_DAY_HISTORY,
+        GET_BLACK_LIST,
+        CLEAR_BLACK_LIST
     }
 }

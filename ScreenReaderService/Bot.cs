@@ -92,6 +92,22 @@ namespace ScreenReaderService
                     }
                     break;
 
+                case CommandType.GET_BLACK_LIST:
+                    if (BotService.BadOrdersService.OrdersBlackList.Count == 0)
+                        await Notifier.NotifyMessage("No blacklisted orders");
+                    else
+                        await Notifier.NotifyMessage(string.Join("\n\n********\n\n", BotService.BadOrdersService.OrdersBlackList));
+                    break;
+                case CommandType.CLEAR_BLACK_LIST:
+                    if (BotService.BadOrdersService.OrdersBlackList.Count == 0)
+                        await Notifier.NotifyMessage("No blacklisted orders to be cleared");
+                    else
+                    {
+                        BotService.BadOrdersService.OrdersBlackList.Clear();
+                        await Notifier.NotifyMessage("Orders blacklist cleared");
+                    }
+                    break;
+
                 case CommandType.DELIVERED: await MarkDelivered(command.Data); break;
             }
         }
